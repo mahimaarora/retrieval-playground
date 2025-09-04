@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: bold 18px Arial; text-anchor: middle; }
+      .node-text { font: 12px Arial; text-anchor: middle; }
+      .edge-text { font: 10px Arial; text-anchor: middle; }
+      .input { fill: #e1f5fe; stroke: #01579b; stroke-width: 2; }
+      .router { fill: #fff3e0; stroke: #e65100; stroke-width: 2; }
+      .classification { fill: #f3e5f5; stroke: #4a148c; stroke-width: 2; }
+      .fallback { fill: #ffebee; stroke: #b71c1c; stroke-width: 2; }
+      .greetings { fill: #e8f5e8; stroke: #1b5e20; stroke-width: 2; }
+      .research { fill: #e3f2fd; stroke: #0d47a1; stroke-width: 2; }
+      .unknown { fill: #fce4ec; stroke: #880e4f; stroke-width: 2; }
+      .response { fill: #f1f8e9; stroke: #33691e; stroke-width: 2; }
+      .vector-search { fill: #e8eaf6; stroke: #1a237e; stroke-width: 2; }
+      .default-response { fill: #fff8e1; stroke: #e65100; stroke-width: 2; }
+      .threshold { fill: #f9fbe7; stroke: #827717; stroke-width: 2; }
+    </style>
+  </defs>
+  
+  <!-- Title -->
+  <text x="400" y="25" class="title">🚀 Semantic Routing System Flow</text>
+  
+  <!-- Input Query -->
+  <rect x="320" y="50" width="160" height="40" rx="5" class="input"/>
+  <text x="400" y="75" class="node-text">🔍 Input Query</text>
+  
+  <!-- Semantic Router -->
+  <rect x="320" y="120" width="160" height="40" rx="5" class="router"/>
+  <text x="400" y="145" class="node-text">🧠 Semantic Router</text>
+  
+  <!-- Threshold Check -->
+  <rect x="200" y="190" width="140" height="50" rx="5" class="threshold"/>
+  <text x="270" y="210" class="node-text">📊 Threshold Check</text>
+  <text x="270" y="225" class="node-text">Score ≥ 0.7</text>
+  
+  <!-- Default Fallback -->
+  <rect x="460" y="190" width="140" height="50" rx="5" class="fallback"/>
+  <text x="530" y="210" class="node-text">⚠️ Default Fallback</text>
+  <text x="530" y="225" class="node-text">No Route Found</text>
+  
+  <!-- Route Classification -->
+  <rect x="200" y="280" width="140" height="40" rx="5" class="classification"/>
+  <text x="270" y="305" class="node-text">🎯 Route Classification</text>
+  
+  <!-- Greetings Route -->
+  <rect x="50" y="360" width="120" height="50" rx="5" class="greetings"/>
+  <text x="110" y="380" class="node-text">👋 Greetings</text>
+  <text x="110" y="395" class="node-text">No Retrieval</text>
+  
+  <!-- Research Papers Route -->
+  <rect x="200" y="360" width="120" height="50" rx="5" class="research"/>
+  <text x="260" y="380" class="node-text">📚 Research Papers</text>
+  <text x="260" y="395" class="node-text">Vector Retrieval</text>
+  
+  <!-- Unknown Route -->
+  <rect x="350" y="360" width="120" height="50" rx="5" class="unknown"/>
+  <text x="410" y="380" class="node-text">❓ Unknown Route</text>
+  <text x="410" y="395" class="node-text">Unrecognized</text>
+  
+  <!-- Direct LLM Response -->
+  <rect x="50" y="460" width="120" height="40" rx="5" class="response"/>
+  <text x="110" y="485" class="node-text">💬 Direct LLM</text>
+  
+  <!-- Vector Search + LLM -->
+  <rect x="200" y="460" width="120" height="40" rx="5" class="vector-search"/>
+  <text x="260" y="485" class="node-text">🔍 Vector + LLM</text>
+  
+  <!-- Default Response -->
+  <rect x="460" y="460" width="140" height="40" rx="5" class="default-response"/>
+  <text x="530" y="485" class="node-text">🤖 Default Response</text>
+  
+  <!-- Arrows -->
+  <!-- Input to Router -->
+  <line x1="400" y1="90" x2="400" y2="120" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Router to Threshold -->
+  <line x1="360" y1="160" x2="300" y2="190" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Router to Fallback -->
+  <line x1="440" y1="160" x2="500" y2="190" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Threshold to Classification -->
+  <line x1="270" y1="240" x2="270" y2="280" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+
+  
+  <!-- Classification to routes -->
+  <line x1="230" y1="320" x2="130" y2="360" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="270" y1="320" x2="260" y2="360" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="310" y1="320" x2="390" y2="360" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Routes to responses -->
+  <line x1="110" y1="410" x2="110" y2="460" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="260" y1="410" x2="260" y2="460" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="410" y1="410" x2="500" y2="460" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="530" y1="240" x2="530" y2="460" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+  </defs>
+  
+
+  
+  <!-- Configuration Info -->
+  <text x="400" y="550" class="edge-text" style="font-weight: bold;">Configuration: Threshold = 0.7 | Routes: Greetings, Research Papers</text>
+  <text x="400" y="570" class="edge-text">Updated Fallback: Provides default response instead of routing to research papers</text>
+</svg>

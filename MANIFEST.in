@@ -1,0 +1,33 @@
+# Include the README and requirements files
+include README.md
+include requirements.txt
+include LICENSE*
+
+# Include all data files
+recursive-include retrieval_playground/data *.pdf
+recursive-include retrieval_playground/data *.txt
+recursive-include retrieval_playground/data *.json
+recursive-include retrieval_playground/data *.md
+
+# Include configuration files
+include pyproject.toml
+include setup.py
+
+# Include test files  
+recursive-include retrieval_playground/tests *.py
+
+# Include documentation
+recursive-include docs *.md
+recursive-include docs *.rst
+
+# Exclude development and build files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .pytest_cache
+global-exclude *.egg-info
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude venv *
