@@ -166,63 +166,63 @@ def demo_query_processing():
             print(f"   Error: {e}")
         print()
     
-    # # Query Decomposition Demo
-    # print("\n📋 QUERY DECOMPOSITION")
-    # print("-" * 50)
-    # print("Purpose: Break compound queries into atomic sub-queries")
-    # print()
+    # Query Decomposition Demo
+    print("\n📋 QUERY DECOMPOSITION")
+    print("-" * 50)
+    print("Purpose: Break compound queries into atomic sub-queries")
+    print()
     
-    # for i, example in enumerate(QUERY_EXAMPLES["decomposition"], 1):
-    #     query = example["query"]
-    #     print(f"{i}. Original: {query}")
-    #     try:
-    #         sub_queries = decompose_query(query)
-    #         print(f"   Sub-queries:")
-    #         for j, sub_query in enumerate(sub_queries, 1):
-    #             print(f"{sub_query}")
-    #     except Exception as e:
-    #         print(f"   Error: {e}")
-    #     print()
+    for i, example in enumerate(QUERY_EXAMPLES["decomposition"], 1):
+        query = example["query"]
+        print(f"{i}. Original: {query}")
+        try:
+            sub_queries = decompose_query(query)
+            print(f"   Sub-queries:")
+            for j, sub_query in enumerate(sub_queries, 1):
+                print(f"{sub_query}")
+        except Exception as e:
+            print(f"   Error: {e}")
+        print()
     
-    # # Query Rewriting Demo
-    # print("\n✏️  QUERY REWRITING")
-    # print("-" * 50)
-    # print("Purpose: Make context-dependent queries standalone")
-    # print()
+    # Query Rewriting Demo
+    print("\n✏️  QUERY REWRITING")
+    print("-" * 50)
+    print("Purpose: Make context-dependent queries standalone")
+    print()
     
-    # for i, example in enumerate(QUERY_EXAMPLES["rewriting"], 1):
-    #     query = example["query"]
-    #     context = example["previous_conversation_history"]
-    #     print(f"{i}. Context-dependent: {query}")
-    #     print(f"   Context: {context}")
-    #     try:
-    #         rewritten = rewrite_query(query, context)
-    #         print(f"   Standalone: {rewritten}")
-    #     except Exception as e:
-    #         print(f"   Error: {e}")
-    #     print()
+    for i, example in enumerate(QUERY_EXAMPLES["rewriting"], 1):
+        query = example["query"]
+        context = example["previous_conversation_history"]
+        print(f"{i}. Context-dependent: {query}")
+        print(f"   Context: {context}")
+        try:
+            rewritten = rewrite_query(query, context)
+            print(f"   Standalone: {rewritten}")
+        except Exception as e:
+            print(f"   Error: {e}")
+        print()
     
-    # # Self-Querying Demo
-    # print("\n🎯 SELF-QUERYING")
-    # print("-" * 50)
-    # print("Purpose: Transform complex input into optimal search queries")
-    # print()
+    # Self-Querying Demo
+    print("\n🎯 SELF-QUERYING")
+    print("-" * 50)
+    print("Purpose: Transform complex input into optimal search queries")
+    print()
     
-    # for i, example in enumerate(QUERY_EXAMPLES["self_querying"], 1):
-    #     query = example["query"]
-    #     print(f"{i}. Complex Input: {query}")
-    #     try:
-    #         search_queries = self_query(query)
-    #         print(f"   Optimal Search Queries:")
-    #         for j, search_query in enumerate(search_queries, 1):
-    #             print(f"{search_query}")
-    #     except Exception as e:
-    #         print(f"   Error: {e}")
-    #     print()
+    for i, example in enumerate(QUERY_EXAMPLES["self_querying"], 1):
+        query = example["query"]
+        print(f"{i}. Complex Input: {query}")
+        try:
+            search_queries = self_query(query)
+            print(f"   Optimal Search Queries:")
+            for j, search_query in enumerate(search_queries, 1):
+                print(f"{search_query}")
+        except Exception as e:
+            print(f"   Error: {e}")
+        print()
     
-    # print("=" * 80)
-    # print("DEMO COMPLETE")
-    # print("=" * 80)
+    print("=" * 80)
+    print("DEMO COMPLETE")
+    print("=" * 80)
 
 
 if __name__ == "__main__":
