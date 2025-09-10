@@ -41,6 +41,8 @@ DEFAULT_TIMEOUT = None
 
 # Embedding model
 DEFAULT_EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-0.6B"
+# RERANKER_MODEL = "BAAI/bge-m3"
+RERANKER_MODEL = "BAAI/bge-reranker-base"
 
 # Data paths (relative to package)
 DATA_SUBDIR = "data"

@@ -11,10 +11,10 @@ from retrieval_playground.utils.pylogger import get_python_logger
 from retrieval_playground.utils import constants
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
-from retrieval_playground.utils import config
 import psutil
 import os
 import signal
+from qdrant_client.models import Distance
 
 
 class RAG:
@@ -64,8 +64,9 @@ Answer:"""
             client=self.qdrant_client,
             collection_name=collection_name,
             embedding=self.embeddings,
+            distance=Distance.COSINE 
         )
-        results = vector_store.similarity_search_with_score(query, k=5)
+        results = vector_store.similarity_search_with_relevance_scores(query, k=5)
         return results
     
     def generate_answer(self, query: str, context_docs: List[Document]) -> str:
