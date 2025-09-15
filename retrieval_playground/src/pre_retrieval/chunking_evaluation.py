@@ -37,8 +37,7 @@ class ChunkingEvaluator:
         self.logger.info(f"🔄 Evaluating {strategy.value} strategy...")
         
         # Initialize RAG with specific collection path
-        qdrant_path = config.QDRANT_DIR / strategy.value
-        rag = RAG(qdrant_path=str(qdrant_path))
+        rag = RAG(strategy=strategy)
         
         # Process queries
         rag_results = []

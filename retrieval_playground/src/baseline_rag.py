@@ -15,12 +15,13 @@ import psutil
 import os
 import signal
 from qdrant_client.models import Distance
+from retrieval_playground.utils import config
 
 
 class RAG:
     """RAG pipeline for document processing and question answering."""
     
-    def __init__(self, qdrant_path: str = None):
+    def __init__(self, strategy: str = None):
         """
         Initialize the BaselineRAG pipeline.
         """
@@ -29,27 +30,27 @@ class RAG:
         # Initialize LLM
         self.llm = model_manager.get_llm()
         self.embeddings = model_manager.get_embeddings()
-        
-        self.qdrant_path = qdrant_path
+
+        self.strategy = strategy
+        self.qdrant_path = config.QDRANT_DIR / self.strategy.value
         self.qdrant_client = QdrantClient(path=str(self.qdrant_path))
 
         # Define RAG prompt template
         self.rag_prompt = ChatPromptTemplate.from_template(
             """You are a helpful assistant that answers questions based on the provided context.
-            
+Please provide a comprehensive answer based on the context below. If the context doesn't contain enough information to answer the question, please say so.
+
+Question: {question} 
+
 Context:
 {context}
-
-Question: {question}
-
-Please provide a comprehensive answer based on the context above. If the context doesn't contain enough information to answer the question, please say so.
 
 Answer:"""
         )
         
         self.logger.info("✅ BaselineRAG pipeline initialized")
     
-    def retrieve_context(self, query: str, k: int = 5, collection_name: str = "baseline") -> List[Document]:
+    def retrieve_context(self, query: str, k: int = 5, collection_name: str = None) -> List[Document]:
         """
         Retrieve relevant context documents for a query.
         
@@ -60,6 +61,8 @@ Answer:"""
         Returns:
             List of relevant Document objects
         """
+        if collection_name is None:
+            collection_name = self.strategy.value
         vector_store = QdrantVectorStore(
             client=self.qdrant_client,
             collection_name=collection_name,
@@ -98,7 +101,7 @@ Answer:"""
         
         return response.content
     
-    def query(self, question: str, k: int = 5, collection_name: str = "base_rag_chunks") -> Dict[str, Any]:
+    def query(self, question: str, k: int = 5, collection_name: str = None) -> Dict[str, Any]:
         """
         Perform end-to-end RAG query: retrieve context and generate answer.
         
@@ -109,6 +112,8 @@ Answer:"""
         Returns:
             Dictionary containing answer, context, and metadata
         """
+        if collection_name is None:
+            collection_name = self.strategy.value
         self.logger.info(f"🔍 Processing RAG query: '{question[:50]}...'")
         
         # Retrieve relevant context

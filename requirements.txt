@@ -3,6 +3,7 @@ langchain-google-genai
 langchain-huggingface
 langchain-qdrant
 langchain-docling
+langgraph
 qdrant-client
 langchain-community
 pydantic
