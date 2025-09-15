@@ -26,20 +26,34 @@ from ragas.llms import LangchainLLMWrapper
 class RAGEvaluator:
     """Evaluator for RAG systems using RAGAS metrics."""
     
-    def __init__(self):
-        """Initialize the RAG evaluator."""
+    def __init__(self, metrics: List[str] = None):
+        """
+        Initialize the RAG evaluator.
+        
+        Args:
+            metrics: List of metric names to compute. If None, computes all metrics.
+                    Available: ['answer_relevancy', 'faithfulness', 'context_precision', 'context_recall']
+        """
         self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
         self.llm = model_manager.get_llm()
         
-        # Define metrics to compute
-        self.metrics = [
-            answer_relevancy,
-            faithfulness,
-            context_precision,
-            context_recall
-        ]
+        # Define available metrics
+        available_metrics = {
+            'answer_relevancy': answer_relevancy,
+            'faithfulness': faithfulness,
+            'context_precision': context_precision,
+            'context_recall': context_recall
+        }
         
-        self.logger.info("✅ RAGEvaluator initialized")
+        # Set metrics to compute
+        if metrics is None:
+            self.metrics = list(available_metrics.values())
+            self.metric_names = list(available_metrics.keys())
+        else:
+            self.metrics = [available_metrics[name] for name in metrics if name in available_metrics]
+            self.metric_names = [name for name in metrics if name in available_metrics]
+        
+        self.logger.info(f"✅ RAGEvaluator initialized with metrics: {self.metric_names}")
     
     def evaluate_batch(
         self,
@@ -84,13 +98,8 @@ class RAGEvaluator:
                 exception_types=RagasOutputParserException,
             ))
         
-        # Extract scores
-        scores = {
-            "answer_relevancy": result["answer_relevancy"],
-            "faithfulness": result["faithfulness"],
-            "context_precision": result["context_precision"],
-            "context_recall": result["context_recall"]
-        }
+        # Extract scores for computed metrics only
+        scores = {metric_name: result[metric_name] for metric_name in self.metric_names}
         
         self.logger.info("✅ Evaluation completed")
         return scores
@@ -150,7 +159,8 @@ class RAGEvaluator:
 
 def evaluate_rag_system(
     rag_results: List[Dict[str, Any]],
-    ground_truths: List[str]
+    ground_truths: List[str],
+    metrics: List[str] = None
 ) -> Dict[str, float]:
     """
     Convenience function to evaluate a RAG system.
@@ -158,9 +168,10 @@ def evaluate_rag_system(
     Args:
         rag_results: List of RAG query results
         ground_truths: List of reference answers
+        metrics: List of metric names to compute. If None, computes all metrics.
         
     Returns:
         Dictionary containing metric scores
     """
-    evaluator = RAGEvaluator()
+    evaluator = RAGEvaluator(metrics=metrics)
     return evaluator.evaluate_rag_results(rag_results, ground_truths)
