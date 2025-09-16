@@ -73,7 +73,7 @@ threshold_results = vector_store.similarity_search_with_score(
 # Metadata filtering
 filtered_results = vector_store.similarity_search(
     query="computer vision",
-    filter={"source": "research_papers", "year": 2024}
+    filter={"source": "research_papers", "year": 2025}
 )
 ```
 
@@ -99,7 +99,6 @@ filtered_results = vector_store.similarity_search(
 - `top_n`: Final reranked results (default: 3)
 
 ### Supported Models
-- **Cross-Encoder**: `ms-marco-MiniLM-L-6-v2` (configurable via constants)
 - **Embeddings**: Compatible with any LangChain embedding model
 - **Vector Store**: Qdrant with cosine similarity
 
