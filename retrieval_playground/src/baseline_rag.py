@@ -21,7 +21,7 @@ from retrieval_playground.utils import config
 class RAG:
     """RAG pipeline for document processing and question answering."""
     
-    def __init__(self, strategy: str = None):
+    def __init__(self, strategy: str = None, use_cloud: bool = True):
         """
         Initialize the BaselineRAG pipeline.
         """
@@ -32,8 +32,12 @@ class RAG:
         self.embeddings = model_manager.get_embeddings()
 
         self.strategy = strategy
-        self.qdrant_path = config.QDRANT_DIR / self.strategy.value
-        self.qdrant_client = QdrantClient(path=str(self.qdrant_path))
+        if use_cloud:
+            self.qdrant_path = None
+            self.qdrant_client = QdrantClient(url=constants.QDRANT_URL, api_key=constants.QDRANT_KEY)
+        else:   
+            self.qdrant_path = config.QDRANT_DIR / self.strategy.value
+            self.qdrant_client = QdrantClient(path=str(self.qdrant_path))
 
         # Define RAG prompt template
         self.rag_prompt = ChatPromptTemplate.from_template(

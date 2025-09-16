@@ -1,21 +1,13 @@
 strategy,queries,answer_relevancy,faithfulness,context_precision,context_recall,average_score
-unstructured,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.9162063473339929,1.0,0.94999999997625,1.0,0.9665515868275607
-recursive_character,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.8787960793652841,1.0,0.249999999975,0.75,0.719699019835071
-baseline,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.8670212861371147,1.0,0.249999999975,0.5,0.6542553215280287
-docling,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.0,1.0,0.0,0.0,0.25
-docling,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.0,1.0,0.0,0.0,0.25
-baseline,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.0,0.875,0.0,0.0,0.21875
-unstructured,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.0,0.8333333333333334,0.0,0.0,0.20833333333333334
-recursive_character,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.0,0.75,0.0,0.0,0.1875
-baseline,"What are the key decidable restrictions on the SSM satisfiability problem identified in the paper, and what are their corresponding complexity bounds?",0.0,1.0,0.0,0.0,0.25
-docling,"What are the key decidable restrictions on the SSM satisfiability problem identified in the paper, and what are their corresponding complexity bounds?",0.0,1.0,0.0,0.0,0.25
-unstructured,"What are the key decidable restrictions on the SSM satisfiability problem identified in the paper, and what are their corresponding complexity bounds?",0.0,0.8333333333333334,0.0,0.0,0.20833333333333334
-recursive_character,"What are the key decidable restrictions on the SSM satisfiability problem identified in the paper, and what are their corresponding complexity bounds?",0.0,0.75,0.0,0.0,0.1875
-docling,"What are the key challenges in adapting existing open-vocabulary semantic segmentation (OVSS) frameworks, designed for natural images, to remote sensing images, and how does SegEarth-OV address these challenges?",0.0,1.0,0.0,0.0,0.25
-unstructured,"What are the key challenges in adapting existing open-vocabulary semantic segmentation (OVSS) frameworks, designed for natural images, to remote sensing images, and how does SegEarth-OV address these challenges?",0.0,0.8,0.0,0.0,0.2
-baseline,"What are the key challenges in adapting existing open-vocabulary semantic segmentation (OVSS) frameworks, designed for natural images, to remote sensing images, and how does SegEarth-OV address these challenges?",0.0,0.75,0.0,0.0,0.1875
-recursive_character,"What are the key challenges in adapting existing open-vocabulary semantic segmentation (OVSS) frameworks, designed for natural images, to remote sensing images, and how does SegEarth-OV address these challenges?",0.0,0.6666666666666666,0.0,0.0,0.16666666666666666
-docling,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.0,1.0,0.0,0.0,0.25
-unstructured,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.0,0.8333333333333334,0.0,0.0,0.20833333333333334
-baseline,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.0,0.75,0.0,0.0,0.1875
-recursive_character,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.0,0.75,0.0,0.0,0.1875
+baseline,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.8799999999999999,0.9299999999999999,0.72,0.65,0.7949999999999999
+baseline,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.7999999999999999,0.9099999999999999,0.67,0.65,0.7575
+baseline,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.84,0.6799999999999999,0.8,0.59,0.7275
+recursive_character,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.71,0.85,0.8200000000000001,0.5700000000000001,0.7375
+recursive_character,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.9199999999999999,0.76,0.92,0.79,0.8475
+recursive_character,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.99,0.8,0.71,0.56,0.765
+unstructured,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.7899999999999999,0.86,0.8200000000000001,0.62,0.7725
+unstructured,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.94,0.9299999999999999,0.66,0.79,0.83
+unstructured,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.8799999999999999,0.71,0.72,0.65,0.7399999999999999
+docling,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.99,0.8999999999999999,0.66,0.5,0.7625
+docling,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.87,0.84,0.9,0.8200000000000001,0.8574999999999999
+docling,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.72,0.75,0.72,0.59,0.695

@@ -37,7 +37,7 @@ class ChunkingStrategy(Enum):
     RECURSIVE_CHARACTER = "recursive_character"
     UNSTRUCTURED = "unstructured"
     DOCLING = "docling"
-    SEMANTIC = "semantic"
+    # SEMANTIC = "semantic"
 
 
 class PreRetrievalChunking:
