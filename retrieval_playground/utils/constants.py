@@ -31,6 +31,10 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gemini-1.5-flash")
 # API Configuration
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
+# Qdrant Configuration
+QDRANT_KEY = os.getenv("QDRANT_KEY")
+QDRANT_URL = os.getenv("QDRANT_URL")
+
 # Tokenizers parallelism
 TOKENIZERS_PARALLELISM = os.getenv("TOKENIZERS_PARALLELISM", "false")
 
