@@ -196,7 +196,7 @@ def demonstrate_routing_examples():
     ]
     
     results = []
-    print("🚀 SEMANTIC ROUTING EXAMPLES DEMONSTRATION\n" + "="*60)
+    print("\n\n🚀 SEMANTIC ROUTING EXAMPLES DEMONSTRATION\n" + "="*60)
     
     for i, example in enumerate(examples, 1):
         print(f"\n📝 EXAMPLE {i}: {example['category'].upper()}")
@@ -223,9 +223,9 @@ def demonstrate_routing_examples():
                 "routing_successful": True
             }
             
-            print(f"✅ Detected Route: {route.name}")
-            print(f"📊 Confidence Score: {similarity_score}")
-            print(f"🔄 Query with Note: {enhanced_query}")
+            print(f"Detected Route: {route.name}")
+            print(f"Confidence Score: {similarity_score}")
+            print(f"Query with Note: {enhanced_query}")
             
         except Exception as e:
             result = {
@@ -252,9 +252,9 @@ def run_routing_examples():
     Run and display routing examples for testing and demonstration.
     """
     print("🧪 Testing Semantic Routing System...")
-    print(f"📋 Route Configuration: {len(routes)} routes available")
-    print(f"🎯 Similarity Threshold: {ROUTE_SIMILARITY_THRESHOLD}")
-    print(f"🤖 Embedding Model: {constants.DEFAULT_EMBEDDING_MODEL}")
+    print(f"Route Configuration: {len(routes)} routes available")
+    print(f"Similarity Threshold: {ROUTE_SIMILARITY_THRESHOLD}")
+    print(f"Embedding Model: {constants.DEFAULT_EMBEDDING_MODEL}")
     
     # Run the examples
     results = demonstrate_routing_examples()

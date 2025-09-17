@@ -51,7 +51,7 @@ class PreRetrievalChunking:
         # Initialize chunking strategies
         self._init_chunking_strategies()
 
-        self.logger.info("✅ PreRetrievalChunking initialized")
+        self.logger.info("PreRetrievalChunking initialized")
 
     def _init_chunking_strategies(self) -> None:
         """Initialize all chunking strategies."""
@@ -72,7 +72,7 @@ class PreRetrievalChunking:
         # Document converter for Docling
         self.doc_converter = DocumentConverter()
 
-        self.logger.info("✅ All chunking strategies initialized")
+        self.logger.info("All chunking strategies initialized")
 
     def load_and_chunk_documents(
         self,
@@ -91,7 +91,7 @@ class PreRetrievalChunking:
             List of chunked Document objects
         """
         start_time = time.time()
-        self.logger.info(f"🔄 Loading and chunking documents with strategy: {strategy.value}")
+        self.logger.info(f"Loading and chunking documents with strategy: {strategy.value}")
 
         try:
             if strategy == ChunkingStrategy.BASELINE:
@@ -108,7 +108,7 @@ class PreRetrievalChunking:
                 raise ValueError(f"Unknown chunking strategy: {strategy}")
 
             elapsed_time = time.time() - start_time
-            self.logger.info(f"⏱️ Strategy {strategy.value} completed in {elapsed_time:.2f} seconds")
+            self.logger.info(f"Strategy {strategy.value} completed in {elapsed_time:.2f} seconds")
             return result
 
         except Exception as e:
@@ -125,7 +125,7 @@ class PreRetrievalChunking:
         # Load PDFs
         for pdf_file in pdf_path.glob("*.pdf"):
             try:
-                self.logger.info(f"📄 Processing {pdf_file.name} with baseline chunking")
+                self.logger.info(f"Processing {pdf_file.name} with baseline chunking")
                 loader = PyPDFLoader(str(pdf_file))
                 pdf_docs = loader.load()
 
@@ -146,14 +146,14 @@ class PreRetrievalChunking:
 
                 vector_store.add_documents(chunked_docs)
                 total_chunks += len(chunked_docs)
-                self.logger.info(f"✅ Added {len(chunked_docs)} chunks to baseline vector store for {pdf_file.name}")
+                self.logger.info(f"Added {len(chunked_docs)} chunks to baseline vector store for {pdf_file.name}")
 
 
             except Exception as e:
                 self.logger.error(f"❌ Failed to load {pdf_file.name}: {e}")
                 continue
 
-        self.logger.info(f"✅ Baseline chunking completed: {total_chunks} total chunks")
+        self.logger.info(f"Baseline chunking completed: {total_chunks} total chunks")
 
     def _recursive_character_chunking(self, pdf_directory: str, vector_store: QdrantVectorStore) -> List[Document]:
         """Recursive character text splitting."""
@@ -163,7 +163,7 @@ class PreRetrievalChunking:
         # Load PDFs
         for pdf_file in pdf_path.glob("*.pdf"):
             try:
-                self.logger.info(f"📄 Processing {pdf_file.name} with recursive character chunking")
+                self.logger.info(f"Processing {pdf_file.name} with recursive character chunking")
                 loader = PyPDFLoader(str(pdf_file))
                 pdf_docs = loader.load()
 
@@ -181,13 +181,13 @@ class PreRetrievalChunking:
 
                 vector_store.add_documents(chunked_docs)
                 total_chunks += len(chunked_docs)
-                self.logger.info(f"✅ Added {len(chunked_docs)} chunks to recursive character vector store for {pdf_file.name}")
+                self.logger.info(f"Added {len(chunked_docs)} chunks to recursive character vector store for {pdf_file.name}")
 
             except Exception as e:
                 self.logger.error(f"❌ Failed to load {pdf_file.name}: {e}")
                 continue
 
-        self.logger.info(f"✅ Recursive character chunking completed: {total_chunks} total chunks")
+        self.logger.info(f"Recursive character chunking completed: {total_chunks} total chunks")
 
 
     def _semantic_chunking(self, pdf_directory: str, vector_store: QdrantVectorStore) -> List[Document]:
@@ -198,7 +198,7 @@ class PreRetrievalChunking:
         # Load PDFs
         for pdf_file in pdf_path.glob("*.pdf"):
             try:
-                self.logger.info(f"📄 Processing {pdf_file.name} with semantic chunking")
+                self.logger.info(f"Processing {pdf_file.name} with semantic chunking")
                 loader = PyPDFLoader(str(pdf_file))
                 pdf_docs = loader.load()
 
@@ -216,13 +216,13 @@ class PreRetrievalChunking:
                 total_chunks += len(chunked_docs)
 
                 vector_store.add_documents(chunked_docs)
-                self.logger.info(f"✅ Added {len(chunked_docs)} chunks to semantic vector store for {pdf_file.name}")
+                self.logger.info(f"Added {len(chunked_docs)} chunks to semantic vector store for {pdf_file.name}")
 
             except Exception as e:
                 self.logger.error(f"❌ Failed to load {pdf_file.name}: {e}")
                 continue
 
-        self.logger.info(f"✅ Semantic chunking completed: {total_chunks} total chunks")
+        self.logger.info(f"Semantic chunking completed: {total_chunks} total chunks")
 
 
     def _docling_chunking(self, pdf_directory: str, vector_store: QdrantVectorStore) -> List[Document]:
@@ -239,7 +239,7 @@ class PreRetrievalChunking:
 
         for pdf_file in pdf_path.glob("*.pdf"):
             try:
-                self.logger.info(f"📄 Processing {pdf_file.name} with Docling chunking")
+                self.logger.info(f"Processing {pdf_file.name} with Docling chunking")
 
                 # Use Docling to convert PDF
                 loader = DoclingLoader(
@@ -265,13 +265,13 @@ class PreRetrievalChunking:
 
                 vector_store.add_documents(chunked_docs)
                 total_chunks += len(chunked_docs)
-                self.logger.info(f"✅ Added {len(chunked_docs)} chunks to docling vector store for {pdf_file.name}")
+                self.logger.info(f"Added {len(chunked_docs)} chunks to docling vector store for {pdf_file.name}")
 
             except Exception as e:
                 self.logger.error(f"❌ Failed to process {pdf_file.name} with Docling: {e}")
                 continue
 
-        self.logger.info(f"✅ Docling chunking completed: {total_chunks} total chunks")
+        self.logger.info(f"Docling chunking completed: {total_chunks} total chunks")
 
 
     def _unstructured_chunking(self, pdf_directory: str, vector_store: QdrantVectorStore) -> List[Document]:
@@ -281,7 +281,7 @@ class PreRetrievalChunking:
 
         for pdf_file in pdf_path.glob("*.pdf"):
             try:
-                self.logger.info(f"📄 Processing {pdf_file.name} with Unstructured chunk_by_title")
+                self.logger.info(f"Processing {pdf_file.name} with Unstructured chunk_by_title")
 
                 # Partition PDF into elements
                 elements = partition_pdf(
@@ -315,13 +315,13 @@ class PreRetrievalChunking:
 
                 vector_store.add_documents(documents)
                 total_chunks += len(documents)
-                self.logger.info(f"✅ Added {len(documents)} chunks to unstructured vector store for {pdf_file.name}")
+                self.logger.info(f"Added {len(documents)} chunks to unstructured vector store for {pdf_file.name}")
 
             except Exception as e:
                 self.logger.error(f"❌ Failed to process {pdf_file.name} with Unstructured: {e}")
                 continue
 
-        self.logger.info(f"✅ Unstructured chunk_by_title completed: {total_chunks} total chunks")
+        self.logger.info(f"Unstructured chunk_by_title completed: {total_chunks} total chunks")
 
 
     def get_available_strategies(self) -> List[ChunkingStrategy]:
@@ -330,11 +330,11 @@ class PreRetrievalChunking:
 
     def create_and_store_chunks(self, pdf_directory: str, strategy: ChunkingStrategy, use_cloud: bool = False) -> List[Document]:
         """Create and store chunks for a given strategy."""
-        self.logger.info(f"🏗️ Creating and storing chunks for strategy: {strategy.value}")
+        self.logger.info(f"Creating and storing chunks for strategy: {strategy.value}")
 
         if use_cloud:
             # Cloud Qdrant setup
-            self.logger.info(f"🔧 Initializing cloud Qdrant client and collection: {strategy.value}")
+            self.logger.info(f"Initializing cloud Qdrant client and collection: {strategy.value}")
             qdrant_client = QdrantClient(
                 url=constants.QDRANT_URL,
                 api_key=constants.QDRANT_KEY
@@ -345,17 +345,17 @@ class PreRetrievalChunking:
             collection_exists = any(col.name == strategy.value for col in collections.collections)
 
             if collection_exists:
-                self.logger.info(f"✅ Collection {strategy.value} already exists, skipping chunk creation")
+                self.logger.info(f"Collection {strategy.value} already exists, skipping chunk creation")
                 return
         else:
             # Local Qdrant setup (original behavior)
             qdrant_path = config.QDRANT_DIR / strategy.value
             exists = qdrant_path.exists() and any(qdrant_path.iterdir())
             if exists:
-                self.logger.info(f"✅ Collection {strategy.value} already exists, skipping chunk creation")
+                self.logger.info(f"Collection {strategy.value} already exists, skipping chunk creation")
                 return
 
-            self.logger.info(f"🔧 Initializing local Qdrant client and collection: {strategy.value}")
+            self.logger.info(f"Initializing local Qdrant client and collection: {strategy.value}")
             qdrant_client = QdrantClient(path=str(qdrant_path))
 
         qdrant_client.create_collection(
@@ -374,7 +374,7 @@ class PreRetrievalChunking:
 
         self.load_and_chunk_documents(pdf_directory, strategy, vector_store)
 
-        self.logger.info(f"🔒 Cleaning up resources for {strategy.value}")
+        self.logger.info(f"Cleaning up resources for {strategy.value}")
         qdrant_client.close()
         del qdrant_client
         del vector_store

@@ -24,7 +24,7 @@ class ChunkingEvaluator:
         
         # Load test queries
         self.test_queries = self._load_test_queries()
-        self.logger.info(f"✅ Loaded {len(self.test_queries)} test queries")
+        self.logger.info(f"Loaded {len(self.test_queries)} test queries")
     
     def _load_test_queries(self) -> List[Dict[str, Any]]:
         """Load test queries from JSON file."""
@@ -34,7 +34,7 @@ class ChunkingEvaluator:
     
     def evaluate_strategy(self, strategy: ChunkingStrategy) -> Dict[str, float]:
         """Evaluate a single chunking strategy."""
-        self.logger.info(f"🔄 Evaluating {strategy.value} strategy...")
+        self.logger.info(f"Evaluating {strategy.value} strategy...")
         
         # Initialize RAG with specific collection path
         rag = RAG(strategy=strategy)
@@ -60,7 +60,7 @@ class ChunkingEvaluator:
     
     def evaluate_all_strategies(self) -> pd.DataFrame:
         """Evaluate all chunking strategies and return comparison results."""
-        self.logger.info("🚀 Starting evaluation of all chunking strategies...")
+        self.logger.info("Starting evaluation of all chunking strategies...")
         
         strategies = [
             ChunkingStrategy.BASELINE,
@@ -110,12 +110,12 @@ class ChunkingEvaluator:
         # Sort by average score
         strategy_summary = strategy_summary.sort_values('average_score', ascending=False)
         
-        print(f"\n🏆 STRATEGY RANKINGS (by average score):")
+        print(f"\nSTRATEGY RANKINGS (by average score):")
         print("-" * 50)
         for i, (strategy, row) in enumerate(strategy_summary.iterrows(), 1):
             print(f"{i}. {strategy.upper():<20} | Avg: {row['average_score']:.3f}")
         
-        print(f"\n📈 DETAILED METRICS:")
+        print(f"\nDETAILED METRICS:")
         print("-" * 80)
         print(f"{'Strategy':<20} {'Relevancy':<10} {'Faithful':<10} {'Precision':<10} {'Recall':<10} {'Average':<10}")
         print("-" * 80)
@@ -129,14 +129,14 @@ class ChunkingEvaluator:
         worst_strategy = strategy_summary.index[-1]
         improvement = strategy_summary.loc[best_strategy, 'average_score'] - strategy_summary.loc[worst_strategy, 'average_score']
         
-        print(f"\n💡 KEY INSIGHTS:")
+        print(f"\nKEY INSIGHTS:")
         print("-" * 30)
         print(f"• Best Strategy: {best_strategy.upper()} ({strategy_summary.loc[best_strategy, 'average_score']:.3f})")
         print(f"• Worst Strategy: {worst_strategy.upper()} ({strategy_summary.loc[worst_strategy, 'average_score']:.3f})")
         print(f"• Performance Gap: {improvement:.3f} ({improvement/strategy_summary.loc[worst_strategy, 'average_score']*100:.1f}% improvement)")
         
         # Show which strategy excels in each metric
-        print(f"\n🎯 BEST BY METRIC:")
+        print(f"\nBEST BY METRIC:")
         print("-" * 25)
         for metric in ['answer_relevancy', 'faithfulness', 'context_precision', 'context_recall']:
             best_for_metric = strategy_summary[metric].idxmax()

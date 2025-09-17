@@ -17,13 +17,15 @@ import numpy as np
 class Reranker:
     """Reranking retriever using cross-encoder models."""
     
-    def __init__(self, strategy: ChunkingStrategy = ChunkingStrategy.UNSTRUCTURED, qdrant_client: QdrantClient = None, top_k: int = 20, top_n: int = 3):
+    def __init__(self, strategy: ChunkingStrategy = ChunkingStrategy.UNSTRUCTURED, use_cloud: bool = True, qdrant_client: QdrantClient = None, top_k: int = 20, top_n: int = 3):
         self.strategy = strategy
         self.top_k = top_k
         self.top_n = top_n
-        if qdrant_client is None:
-            qdrant_path = config.QDRANT_DIR / self.strategy.value
-            self.qdrant_client = QdrantClient(path=str(qdrant_path))
+        if use_cloud:
+            self.qdrant_client = QdrantClient(url=constants.QDRANT_URL, api_key=constants.QDRANT_KEY)
+        elif qdrant_client is None:
+            self.qdrant_path = config.QDRANT_DIR / self.strategy.value
+            self.qdrant_client = QdrantClient(path=str(self.qdrant_path))
         else:
             self.qdrant_client = qdrant_client
         self._setup_reranker_retriever()
@@ -60,15 +62,15 @@ class Reranker:
             
     def evaluate_reranking(self, close_qdrant_client: bool = True) -> Dict[str, float]:
         """Evaluate reranking performance against baseline retrieval."""
-        print("🔍 Starting reranking evaluation...")
+        print("Starting reranking evaluation...")
         test_queries = self.load_test_queries()
-        print(f"📊 Evaluating {len(test_queries)} test queries")
+        print(f"Evaluating {len(test_queries)} test queries")
         
         reranker_scores = []
         retriever_scores = []
         
         for idx, query in enumerate(test_queries):
-            print(f"\n📝 Query {idx+1}: {query['user_input'][:100]}...")
+            print(f"\nQuery {idx+1}: {query['user_input'][:100]}...")
             
             reranker_output = self.reranker_retriever.invoke(query["user_input"])
             retriever_output = self.retriever.invoke(query["user_input"])[:self.top_n]
@@ -90,7 +92,7 @@ class Reranker:
                 reranker_score = cosine_similarity([ref_embedding], [reranker_embedding])[0][0]
                 retriever_score = cosine_similarity([ref_embedding], [retriever_embedding])[0][0]
                 
-                print(f"  📋 Result {i+1}: Reranker={reranker_score:.3f}, Baseline={retriever_score:.3f}")
+                print(f"  Result {i+1}: Reranker={reranker_score:.3f}, Baseline={retriever_score:.3f}")
                 
                 query_reranker_scores.append(reranker_score)
                 query_retriever_scores.append(retriever_score)
@@ -112,11 +114,11 @@ class Reranker:
         print("\n" + "="*50)
         print("🎯 FINAL RESULTS")
         print("="*50)
-        print(f"📈 Reranker Average Score:  {final_results['reranker_avg_score']:.4f}")
-        print(f"📊 Baseline Average Score:  {final_results['retriever_avg_score']:.4f}")
-        print(f"🚀 Improvement:             {final_results['improvement']:.4f}")
+        print(f"Reranker Average Score:  {final_results['reranker_avg_score']:.4f}")
+        print(f"Baseline Average Score:  {final_results['retriever_avg_score']:.4f}")
+        print(f"Improvement:             {final_results['improvement']:.4f}")
         improvement_pct = (final_results['improvement'] / final_results['retriever_avg_score']) * 100
-        print(f"📊 Improvement Percentage:  {improvement_pct:.2f}%")
+        print(f"Improvement Percentage:  {improvement_pct:.2f}%")
         
         if final_results['improvement'] > 0:
             print("✅ Reranking shows improvement!")

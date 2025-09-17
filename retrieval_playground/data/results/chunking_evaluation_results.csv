@@ -1,13 +1,13 @@
 strategy,queries,answer_relevancy,faithfulness,context_precision,context_recall,average_score
-baseline,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.8799999999999999,0.9299999999999999,0.72,0.65,0.7949999999999999
-baseline,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.7999999999999999,0.9099999999999999,0.67,0.65,0.7575
-baseline,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.84,0.6799999999999999,0.8,0.59,0.7275
-recursive_character,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.71,0.85,0.8200000000000001,0.5700000000000001,0.7375
-recursive_character,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.9199999999999999,0.76,0.92,0.79,0.8475
-recursive_character,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.99,0.8,0.71,0.56,0.765
-unstructured,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.7899999999999999,0.86,0.8200000000000001,0.62,0.7725
-unstructured,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.94,0.9299999999999999,0.66,0.79,0.83
-unstructured,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.8799999999999999,0.71,0.72,0.65,0.7399999999999999
-docling,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.99,0.8999999999999999,0.66,0.5,0.7625
-docling,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.87,0.84,0.9,0.8200000000000001,0.8574999999999999
-docling,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.72,0.75,0.72,0.59,0.695
+baseline,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.77,0.9199999999999999,0.88,0.73,0.825
+baseline,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.73,0.94,0.75,0.61,0.7575
+baseline,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.77,0.69,0.8500000000000001,0.8400000000000001,0.7875000000000001
+recursive_character,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.9199999999999999,0.6,0.78,0.55,0.7124999999999999
+recursive_character,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.98,0.79,0.68,0.7,0.7875000000000001
+recursive_character,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.99,0.7,0.93,0.86,0.87
+unstructured,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.7899999999999999,0.62,0.93,0.8200000000000001,0.79
+unstructured,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.97,0.9199999999999999,0.86,0.67,0.855
+unstructured,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.83,0.63,0.92,0.72,0.7749999999999999
+docling,"How does MC3G improve upon existing counterfactual explanation methods, particularly concerning cost computation and causal dependencies?",0.94,0.69,0.75,0.86,0.8099999999999999
+docling,"What limitations of the Copas-Jackson bound did the authors identify, and how did they address these limitations in their proposed method?",0.99,0.64,0.66,0.74,0.7575000000000001
+docling,"What is the key innovation of the proposed Riemannian change point detection method, and how does it improve upon previous approaches?",0.8099999999999999,0.71,0.76,0.71,0.7475

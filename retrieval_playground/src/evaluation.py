@@ -53,7 +53,7 @@ class RAGEvaluator:
             self.metrics = [available_metrics[name] for name in metrics if name in available_metrics]
             self.metric_names = [name for name in metrics if name in available_metrics]
         
-        self.logger.info(f"✅ RAGEvaluator initialized with metrics: {self.metric_names}")
+        self.logger.info(f"RAGEvaluator initialized with metrics: {self.metric_names}")
     
     def evaluate_batch(
         self,
