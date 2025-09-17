@@ -20,7 +20,7 @@ setup(
     long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     packages=find_packages(),
-    python_requires=">=3.8",
+    python_requires=">=3.12.7",
     install_requires=read_requirements(),
     entry_points={
         "console_scripts": [
