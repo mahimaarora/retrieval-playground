@@ -21,7 +21,7 @@ from retrieval_playground.utils import config
 class RAG:
     """RAG pipeline for document processing and question answering."""
     
-    def __init__(self, strategy: str = None):
+    def __init__(self, strategy: str = None, use_cloud: bool = True):
         """
         Initialize the BaselineRAG pipeline.
         """
@@ -32,8 +32,12 @@ class RAG:
         self.embeddings = model_manager.get_embeddings()
 
         self.strategy = strategy
-        self.qdrant_path = config.QDRANT_DIR / self.strategy.value
-        self.qdrant_client = QdrantClient(path=str(self.qdrant_path))
+        if use_cloud:
+            self.qdrant_path = None
+            self.qdrant_client = QdrantClient(url=constants.QDRANT_URL, api_key=constants.QDRANT_KEY)
+        else:   
+            self.qdrant_path = config.QDRANT_DIR / self.strategy.value
+            self.qdrant_client = QdrantClient(path=str(self.qdrant_path))
 
         # Define RAG prompt template
         self.rag_prompt = ChatPromptTemplate.from_template(
@@ -48,7 +52,7 @@ Context:
 Answer:"""
         )
         
-        self.logger.info("✅ BaselineRAG pipeline initialized")
+        self.logger.info("BaselineRAG pipeline initialized")
     
     def retrieve_context(self, query: str, k: int = 5, collection_name: str = None) -> List[Document]:
         """
@@ -96,7 +100,7 @@ Answer:"""
         )
         
         # Generate response
-        self.logger.info(f"🤖 Generating answer for query: '{query[:50]}...'")
+        self.logger.info(f"Generating answer for query: '{query[:50]}...'")
         response = self.llm.invoke(messages)
         
         return response.content
@@ -114,7 +118,7 @@ Answer:"""
         """
         if collection_name is None:
             collection_name = self.strategy.value
-        self.logger.info(f"🔍 Processing RAG query: '{question[:50]}...'")
+        self.logger.info(f"Processing RAG query: '{question[:50]}...'")
         
         # Retrieve relevant context
         context_docs_with_score = self.retrieve_context(question, k=k, collection_name=collection_name)
@@ -141,7 +145,7 @@ Answer:"""
             "num_context_docs": len(context_docs)
         }
         
-        self.logger.info("✅ RAG query completed successfully")
+        self.logger.info("RAG query completed successfully")
         return response
 
     def close_qdrant_client(self):
