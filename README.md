@@ -4,12 +4,12 @@ A Python toolkit for RAG experimentation and evaluation.
 
 ## ✨ Features
 
-### 🔹 Pre-Retrieval Strategies
+### Pre-Retrieval Strategies
 - **Chunking**: Baseline, recursive character, unstructured title-based, and Docling hybrid chunking  
 - **Query Enhancement**: Query expansion, decomposition, rewriting, and self-querying  
 - **Semantic Routing**: Route queries to appropriate knowledge domains with confidence scoring  
 
-### 🔹 Mid-Retrieval Strategies  
+### Mid-Retrieval Strategies  
 - **Basic Similarity Search**: Standard semantic search with vector databases  
 - **MMR (Maximal Marginal Relevance)**: Balance relevance and diversity in results  
 - **Score Thresholding**: Quality-based filtering of retrieval results  
@@ -17,13 +17,13 @@ A Python toolkit for RAG experimentation and evaluation.
 - **Reranking**: Cross-encoder models to reorder results for higher precision  
 - **Hybrid Retrieval**: Combine BM25 keyword search with dense semantic search  
 
-### 🔹 Post-Retrieval Strategies
-- 📄 **Stuff Documents**: Simple concatenation of all retrieved documents  
-- 🔄 **Refine Chain**: Iterative refinement of answers across documents  
-- 📊 **Map-Rerank**: Score and rank answers from individual documents  
-- 🔀 **Map-Reduce**: Summarize documents first, then combine for final answer  
+### Post-Retrieval Strategies
+- **Stuff Documents**: Simple concatenation of all retrieved documents  
+- **Refine Chain**: Iterative refinement of answers across documents  
+- **Map-Rerank**: Score and rank answers from individual documents  
+- **Map-Reduce**: Summarize documents first, then combine for final answer  
 
-### 🔹 Evaluation & Management
+### Evaluation & Management
 - 🧪 **RAG Evaluation**: Performance benchmarking with RAGAS metrics  
 - ⚙️ **Model Management**: Unified LLM and embedding model interfaces  
 
@@ -52,13 +52,14 @@ Generate test data:
 rp-generate-test-data
 ```
 
-## ⚙️ Configuration
+## 📓 Interactive Notebooks
 
-```bash
-export GOOGLE_API_KEY="your-google-api-key"
-```
+Explore RAG techniques through hands-on Jupyter notebooks:
 
-Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
+- **1A_Pre_Chunking_Methods.ipynb** - Evaluate and compare different document chunking strategies using RAGAS metrics
+- **1B_Pre_Query_Methods.ipynb** - Demonstrate query expansion, decomposition, rewriting, and self-querying techniques  
+- **2_Mid_Retrieval_Methods.ipynb** - Explore various retrieval methods including MMR, hybrid search, and reranking
+- **3_Post_Retrieval.ipynb** - Compare document chain methods for combining retrieved content into final answers
 
 ## 📄 License
 
