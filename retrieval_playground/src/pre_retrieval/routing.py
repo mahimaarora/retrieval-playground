@@ -63,7 +63,7 @@ papers_route = Route(
 
 routes = [greetings_route, papers_route]
 
-rl = SemanticRouter(encoder=HuggingFaceEncoder(name=constants.DEFAULT_EMBEDDING_MODEL, score_threshold=ROUTE_SIMILARITY_THRESHOLD), routes=routes, auto_sync="local")
+rl = SemanticRouter(encoder=HuggingFaceEncoder(name=constants.DEFAULT_EMBEDDING_MODEL, score_threshold=ROUTE_SIMILARITY_THRESHOLD, trust_remote_code=True), routes=routes, auto_sync="local")
 
 
 def get_route_info():

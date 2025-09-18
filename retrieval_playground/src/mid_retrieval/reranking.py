@@ -43,7 +43,10 @@ class Reranker:
 
         self.retriever = vector_store.as_retriever(search_kwargs={"k": self.top_k})
 
-        model = HuggingFaceCrossEncoder(model_name=constants.RERANKER_MODEL)
+        model = HuggingFaceCrossEncoder(
+            model_name=constants.RERANKER_MODEL,
+            model_kwargs={"trust_remote_code": True}
+        )
         compressor = CrossEncoderReranker(model=model, top_n=self.top_n)
         self.reranker_retriever = ContextualCompressionRetriever(
             base_compressor=compressor, base_retriever=self.retriever

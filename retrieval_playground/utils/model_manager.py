@@ -71,7 +71,8 @@ class ModelManager:
 
             # Initialize embeddings
             self._embeddings = HuggingFaceEmbeddings(
-                model_name=constants.DEFAULT_EMBEDDING_MODEL
+                model_name=constants.DEFAULT_EMBEDDING_MODEL,
+                model_kwargs={"trust_remote_code": True}
             )
 
             self._logger.info(

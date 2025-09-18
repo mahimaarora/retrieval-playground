@@ -26,14 +26,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing :: Linguistic",
 ]
-dependencies = [
-    "docling",
-    "langchain-google-genai",
-    "langchain-huggingface",
-    "pydantic",
-    "pathlib",
-    "uvicorn",
-]
+dynamic = ["dependencies"]
 
 [project.optional-dependencies]
 dev = [
@@ -63,6 +56,9 @@ include = ["retrieval_playground*"]
 
 [tool.setuptools.package-data]
 retrieval_playground = ["data/sample_research_papers/*.pdf"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [tool.black]
 line-length = 88
