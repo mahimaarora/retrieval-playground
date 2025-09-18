@@ -18,6 +18,7 @@ from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.utils.pylogger import get_python_logger
 from retrieval_playground.utils import constants, config
 from langchain_qdrant import QdrantVectorStore
+from langchain.text_splitter import CharacterTextSplitter
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import VectorParams, Distance
 from docling.chunking import HybridChunker
@@ -98,8 +99,8 @@ class PreRetrievalChunking:
                 result = self._baseline_chunking(pdf_directory, vector_store)
             elif strategy == ChunkingStrategy.RECURSIVE_CHARACTER:
                 result = self._recursive_character_chunking(pdf_directory, vector_store)
-            elif strategy == ChunkingStrategy.SEMANTIC:
-                result = self._semantic_chunking(pdf_directory, vector_store)
+            # elif strategy == ChunkingStrategy.SEMANTIC:
+            #     result = self._semantic_chunking(pdf_directory, vector_store)
             elif strategy == ChunkingStrategy.DOCLING:
                 result = self._docling_chunking(pdf_directory, vector_store)
             elif strategy == ChunkingStrategy.UNSTRUCTURED:
@@ -117,7 +118,6 @@ class PreRetrievalChunking:
 
     def _baseline_chunking(self, pdf_directory: str, vector_store: QdrantVectorStore) -> List[Document]:
         """Baseline chunking using CharacterTextSplitter."""
-        from langchain.text_splitter import CharacterTextSplitter
 
         pdf_path = Path(pdf_directory)
         total_chunks = 0
@@ -288,6 +288,7 @@ class PreRetrievalChunking:
                     filename=str(pdf_file),
                     strategy="fast",
                     infer_table_structure=True
+                    languages=["en"]
                 )
 
                 # Chunk by title for better structure awareness
