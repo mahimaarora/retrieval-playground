@@ -25,7 +25,7 @@ Comprehensive retrieval techniques for different use cases:
 ## 🚀 Quick Start
 
 ### Interactive Notebook
-- `2_Mid_Retrieval_Methods.ipynb` - Comprehensive retrieval methods tutorial
+- `retrieval_playground/src/tutorial/2_Mid_Retrieval_Methods.ipynb` - Comprehensive retrieval methods tutorial
 
 ### Usage Examples
 

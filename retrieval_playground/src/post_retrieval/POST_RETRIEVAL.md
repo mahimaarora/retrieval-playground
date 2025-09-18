@@ -34,7 +34,7 @@ Four powerful approaches for combining retrieved documents:
 ## 🚀 Quick Start
 
 ### Interactive Notebook
-- `3_Post_Retrieval.ipynb` - Complete tutorial with both LangChain and LangGraph implementations
+- `retrieval_playground/src/tutorial/3_Post_Retrieval.ipynb` - Complete tutorial with both LangChain and LangGraph implementations
 
 ### Usage Examples
 
