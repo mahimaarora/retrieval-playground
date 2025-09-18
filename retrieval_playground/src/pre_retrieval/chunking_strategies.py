@@ -287,7 +287,7 @@ class PreRetrievalChunking:
                 elements = partition_pdf(
                     filename=str(pdf_file),
                     strategy="fast",
-                    infer_table_structure=True
+                    infer_table_structure=True,
                     languages=["en"]
                 )
 
