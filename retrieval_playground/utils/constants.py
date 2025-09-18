@@ -26,7 +26,7 @@ load_env_file()
 PYTHON_LOG_LEVEL = os.getenv("PYTHON_LOG_LEVEL", "info")
 
 # Model configuration  
-MODEL_NAME = os.getenv("MODEL_NAME", "gemini-1.5-flash")
+MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-flash-lite")
 
 # API Configuration
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -34,6 +34,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 # Qdrant Configuration
 QDRANT_KEY = os.getenv("QDRANT_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL")
+GRPC_VERBOSITY = os.getenv("GRPC_VERBOSITY", "None")
 
 # Tokenizers parallelism
 TOKENIZERS_PARALLELISM = os.getenv("TOKENIZERS_PARALLELISM", "false")

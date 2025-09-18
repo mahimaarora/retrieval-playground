@@ -26,3 +26,4 @@ semantic_router==0.1.11
 seaborn==0.13.2
 ipykernel==6.30.1
 jupyter==1.1.1
+grpcio==1.60.1
