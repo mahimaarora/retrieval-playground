@@ -29,11 +29,36 @@ A Python toolkit for RAG experimentation and evaluation.
 
 ## ⚡ Installation
 
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/yourusername/retrieval-playground.git
 cd retrieval-playground
+```
+
+### 2. Set Up Virtual Environment
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+```bash
 pip install -e .
 ```
+
+### 4. Set Up Jupyter Kernel
+```bash
+python -m ipykernel install --user --name=venv --display-name "pydata_tutorial"
+```
+
+### 5. Launch Jupyter Notebook
+```bash
+jupyter notebook
+```
+
+### 6. Select the Correct Kernel
+- Open any tutorial notebook
+- Go to **Kernel** → **Change kernel** → **pydata_tutorial**
 
 ## 🚀 Quick Start
 
@@ -45,11 +70,6 @@ from retrieval_playground.src.pre_retrieval.chunking_strategies import PreRetrie
 model_manager = ModelManager()
 chunker = PreRetrievalChunking()
 chunks = chunker.chunk_documents(documents, strategy="docling")
-```
-
-Generate test data:
-```bash
-rp-generate-test-data
 ```
 
 ## 📓 Interactive Notebooks

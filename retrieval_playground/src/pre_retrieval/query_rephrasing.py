@@ -109,34 +109,22 @@ def self_query(query: str) -> list[str]:
 QUERY_EXAMPLES = {
     "expansion": [
         {"query": "Generative AI transformer evaluation benchmarks"},
-        {"query": "Retrieved capabilities of LLMs and FLOPs scaling"},
-        {"query": "AI models"},
         {"query": "tell me about computer vision"},
-        {"query": "Physics-informed neural network for fatigue life prediction"},
     ],
     
     "decomposition": [
         {"query":"What are neural networks and how do they work in computer vision applications?"},
         {"query":"Explain machine learning algorithms, their types, and performance evaluation metrics"},
-        {"query":"What is generative AI, what are its applications, and what are the ethical considerations?"},
-        {"query":"How do statistical models work and what are their advantages over machine learning approaches?"},
-        {"query":"What are the latest advances in computer vision and how do they apply to remote sensing?"}
     ],
     
     "rewriting": [
         {"query":"How does it work?", "previous_conversation_history":"User asked about counterfactual generation in machine learning. Assistant explained that it's a method for creating hypothetical scenarios to understand causal relationships in data."},
-        {"query":"What are the main advantages?", "previous_conversation_history":"User inquired about Riemannian manifolds for change point detection. Assistant described how these mathematical structures can capture complex data geometries for robust statistical analysis."},
-        {"query":"Can you explain the methodology?", "previous_conversation_history":"User asked about publication bias in meta-analysis research. Assistant mentioned that Copas-Jackson bounds are statistical techniques used to assess and correct for selective reporting in academic studies."},
-        {"query":"What about the computational complexity?", "previous_conversation_history":"User was learning about state space models in generative AI. Assistant explained that these models represent sequential data through hidden states and observable outputs."},
-        {"query":"How does this compare to traditional approaches?", "previous_conversation_history":"User asked about annotation-free segmentation methods for remote sensing. Assistant described how these computer vision techniques can identify objects without requiring manually labeled training data."}
+        {"query":"What about the computational complexity?", "previous_conversation_history":"User was learning about state space models in generative AI. Assistant explained that these models represent sequential data through hidden states and observable outputs."}
     ],
     
     "self_querying": [
         {"query":"I need to understand the current state of research in computer vision, particularly focusing on segmentation techniques for remote sensing applications. What are the key papers and methodologies?"},
-        {"query":"Please explain the mathematical foundations of manifold learning and how it applies to change point detection. I'm particularly interested in robust estimation methods."},
-        {"query":"Help me understand generative AI models, their computational complexity, and the satisfiability problems in state space models. Focus on recent advances."},
-        {"query":"I want to learn about publication bias in statistical research. Explain the Copas-Jackson bounds and similar methods for addressing selection bias in meta-analysis."},
-        {"query":"Provide an overview of counterfactual generation methods in machine learning, emphasizing model-agnostic approaches and causal constraints."}
+        {"query":"Help me understand generative AI models, their computational complexity, and the satisfiability problems in state space models. Focus on recent advances."}
     ]
 }
 

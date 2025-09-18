@@ -73,7 +73,7 @@ Answer:"""
             embedding=self.embeddings,
             distance=Distance.COSINE 
         )
-        results = vector_store.similarity_search_with_relevance_scores(query, k=5)
+        results = vector_store.similarity_search_with_relevance_scores(query, k=3)
         return results
     
     def generate_answer(self, query: str, context_docs: List[Document]) -> str:

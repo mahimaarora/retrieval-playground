@@ -45,8 +45,11 @@ DEFAULT_TIMEOUT = None
 
 # Embedding model
 DEFAULT_EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-0.6B"
-# RERANKER_MODEL = "BAAI/bge-m3"
 RERANKER_MODEL = "BAAI/bge-reranker-base"
+
+# ALternative Lite Embedding model 
+# DEFAULT_EMBEDDING_MODEL = "Alibaba-NLP/gte-multilingual-base"
+# RERANKER_MODEL = "Alibaba-NLP/gte-multilingual-reranker-base"
 
 # Data paths (relative to package)
 DATA_SUBDIR = "data"
