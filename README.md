@@ -27,11 +27,18 @@ A Python toolkit for RAG experimentation and evaluation.
 - 🧪 **RAG Evaluation**: Performance benchmarking with RAGAS metrics  
 - ⚙️ **Model Management**: Unified LLM and embedding model interfaces  
 
+## Prerequisites
+
+Create a Google account and generate an API key to access Gemini’s free tier:
+1. Visit [Gemini API Docs](https://ai.google.dev/gemini-api/docs)
+2. In the top-right corner, click Get API Key.
+3. Follow the instructions, copy your API key, and save it in a .env file under the variable GOOGLE_API_KEY.
+
 ## ⚡ Installation
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/retrieval-playground.git
+git clone []https://github.com/yourusername/retrieval-playground.git
 cd retrieval-playground
 ```
 
