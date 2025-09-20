@@ -100,7 +100,6 @@ Answer:"""
         )
         
         # Generate response
-        self.logger.info(f"Generating answer for query: '{query[:50]}...'")
         response = self.llm.invoke(messages)
         
         return response.content
@@ -118,7 +117,6 @@ Answer:"""
         """
         if collection_name is None:
             collection_name = self.strategy.value
-        self.logger.info(f"Processing RAG query: '{question[:50]}...'")
         
         # Retrieve relevant context
         context_docs_with_score = self.retrieve_context(question, k=k, collection_name=collection_name)
