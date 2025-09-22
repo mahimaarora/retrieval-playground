@@ -27,3 +27,6 @@ seaborn==0.13.2
 ipykernel==6.30.1
 jupyter==1.1.1
 grpcio==1.60.1
+pytesseract==0.3.13
+pillow==11.3.0
+unstructured[local-inference]
