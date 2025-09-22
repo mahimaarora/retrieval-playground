@@ -34,17 +34,20 @@ Create a Google account and generate an API key to access Gemini’s free tier:
 2. In the top-right corner, click Get API Key.
 3. Follow the instructions, copy your API key, and save it in a .env file under the variable GOOGLE_API_KEY.
 
+[Optional]
+Install your preferred IDE (e.g., Visual Studio, PyCharm), or use the terminal as an alternative.
+
 ## ⚡ Installation
 
 ### 1. Clone the Repository
 ```bash
-git clone []https://github.com/yourusername/retrieval-playground.git
+git clone https://github.com/mahimaarora/retrieval-playground.git
 cd retrieval-playground
 ```
 
 ### 2. Set Up Virtual Environment
 ```bash
-python -m venv venv
+python3.12 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
@@ -66,6 +69,9 @@ jupyter notebook
 ### 6. Select the Correct Kernel
 - Open any tutorial notebook
 - Go to **Kernel** → **Change kernel** → **pydata_tutorial**
+
+### 7. Add `.env` file with secrets
+- Add the content of Wormhole url shared during the tutorial to `.env` file and place the file in the root folder.
 
 ## 🚀 Quick Start
 
