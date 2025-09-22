@@ -81,7 +81,7 @@ chunks = chunker.chunk_documents(documents, strategy="docling")
 
 ## 📓 Interactive Notebooks
 
-Explore RAG techniques through hands-on Jupyter notebooks located in `retrieval_playground/src/tutorial/`:
+Explore RAG techniques through hands-on Jupyter notebooks located in `retrieval_playground/tutorial/`:
 
 - **1A_Pre_Chunking_Methods.ipynb** - Evaluate and compare different document chunking strategies using RAGAS metrics
 - **1B_Pre_Query_Methods.ipynb** - Demonstrate query expansion, decomposition, rewriting, and self-querying techniques  

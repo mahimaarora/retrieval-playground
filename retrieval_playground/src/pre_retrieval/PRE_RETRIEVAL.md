@@ -31,8 +31,8 @@ RAGAS-based benchmarking for chunking strategies.
 ## 🚀 Quick Start
 
 ### Interactive Notebooks
-- `retrieval_playground/src/tutorial/1A_Pre_Chunking_Methods.ipynb` - Chunking strategy evaluation
-- `retrieval_playground/src/tutorial/1B_Pre_Query_Methods.ipynb` - Query rephrasing techniques
+- `retrieval_playground/tutorial/1A_Pre_Chunking_Methods.ipynb` - Chunking strategy evaluation
+- `retrieval_playground/tutorial/1B_Pre_Query_Methods.ipynb` - Query rephrasing techniques
 
 ### Usage Examples
 ```python
