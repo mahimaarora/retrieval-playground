@@ -2,6 +2,7 @@
 Evaluation script for comparing different chunking strategies.
 """
 
+import time
 import json
 from pathlib import Path
 from typing import Dict, List, Any
@@ -78,6 +79,8 @@ class ChunkingEvaluator:
                 result = pd.DataFrame({k: v if isinstance(v, list) else [v]*len(result['faithfulness'])
                    for k, v in result.items()})
                 results.append(result)
+                time.sleep(60)
+                self.logger.info("Pausing for a minute ...")
             except Exception as e:
                 self.logger.error(f"❌ Failed to evaluate {strategy.value}: {e}")
                 continue
