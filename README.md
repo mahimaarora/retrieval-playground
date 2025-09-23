@@ -39,11 +39,11 @@ A Python toolkit for RAG experimentation and evaluation.
    - **macOS:** [Python for macOS](https://docs.python.org/3/using/mac.html)  
    - **Linux:** [Python for Linux/UNIX](https://docs.python.org/3/using/unix.html)
 
-After installing, verify with:
-
-```bash
-python3.12 --version
-```
+   After installing, verify with:
+   
+   ```bash
+   python3.12 --version
+   ```
 
 ## ⚡ Installation
 
