@@ -79,8 +79,8 @@ class ChunkingEvaluator:
                 result = pd.DataFrame({k: v if isinstance(v, list) else [v]*len(result['faithfulness'])
                    for k, v in result.items()})
                 results.append(result)
-                time.sleep(60)
                 self.logger.info("Pausing for a minute ...")
+                time.sleep(60)
             except Exception as e:
                 self.logger.error(f"❌ Failed to evaluate {strategy.value}: {e}")
                 continue
