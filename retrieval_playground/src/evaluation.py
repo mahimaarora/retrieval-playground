@@ -92,7 +92,7 @@ class RAGEvaluator:
             embeddings=model_manager.get_embeddings(),
             run_config=RunConfig(
                 timeout=180,
-                max_retries=10,
+                max_retries=3,
                 max_wait=60,
                 max_workers=1,
                 exception_types=RagasOutputParserException,
