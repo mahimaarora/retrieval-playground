@@ -29,13 +29,21 @@ A Python toolkit for RAG experimentation and evaluation.
 
 ## Prerequisites
 
-Create a Google account and generate an API key to access Gemini’s free tier:
-1. Visit [Gemini API Docs](https://ai.google.dev/gemini-api/docs)
-2. In the top-right corner, click Get API Key.
-3. Follow the instructions, copy your API key, and save it in a .env file under the variable GOOGLE_API_KEY.
+1. Create a Google account and generate an API key to access Gemini’s free tier:
+    - Visit [Gemini API Docs](https://ai.google.dev/gemini-api/docs)
+    - In the top-right corner, click Get API Key. 
+    - Follow the instructions, copy your API key, and save it in a .env file under the variable GOOGLE_API_KEY.
+2. [Optional] Install your preferred IDE (e.g., Visual Studio, PyCharm), or use the terminal as an alternative.### 3. Install Python ≥ 3.12
+3. This project requires Python 3.12 or higher. Follow the official installation guide for your operating system:
+   - **Windows:** [Python for Windows](https://docs.python.org/3/using/windows.html)  
+   - **macOS:** [Python for macOS](https://docs.python.org/3/using/mac.html)  
+   - **Linux:** [Python for Linux/UNIX](https://docs.python.org/3/using/unix.html)
 
-[Optional]
-Install your preferred IDE (e.g., Visual Studio, PyCharm), or use the terminal as an alternative.
+After installing, verify with:
+
+```bash
+python3.12 --version
+```
 
 ## ⚡ Installation
 
