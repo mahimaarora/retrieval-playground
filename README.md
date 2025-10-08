@@ -24,8 +24,8 @@ A Python toolkit for RAG experimentation and evaluation.
 - **Map-Reduce**: Summarize documents first, then combine for final answer  
 
 ### Evaluation & Management
-- 🧪 **RAG Evaluation**: Performance benchmarking with RAGAS metrics  
-- ⚙️ **Model Management**: Unified LLM and embedding model interfaces  
+- **RAG Evaluation**: Performance benchmarking with RAGAS metrics  
+- **Model Management**: Unified LLM and embedding model interfaces  
 
 ## Prerequisites
 
