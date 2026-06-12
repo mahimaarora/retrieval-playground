@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  retrieval-playground:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: retrieval-playground-workshop
+    ports:
+      - "8888:8888"
+    volumes:
+      # Mount the notebooks directory for live editing
+      - ./retrieval_playground/tutorial:/workspace/retrieval_playground/tutorial
+      # Mount data directory
+      - ./retrieval_playground/data:/workspace/retrieval_playground/data
+      # Mount .env file if it exists
+      - ./.env:/workspace/.env:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
