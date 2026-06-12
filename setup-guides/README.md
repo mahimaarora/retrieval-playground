@@ -16,19 +16,24 @@ Before starting, make sure you have:
 
 ## Setup Steps
 
-### Step 1: Choose Your OS Guide
+### Step 1: Choose Your Setup Method
 
-Follow the setup guide for your operating system:
+**Recommended: Docker Setup (Easiest)**
 
--  **[Mac Setup Guide](SETUP_MAC.md)** - macOS users
--  **[Windows Setup Guide](SETUP_WINDOWS.md)** - Windows 10/11 users
--  **[Linux Setup Guide](SETUP_LINUX.md)** - Ubuntu, Fedora, Debian users
+- **🍎 [Mac Setup Guide](SETUP_MAC.md)** - macOS users
+- **🪟 [Windows Setup Guide](SETUP_WINDOWS.md)** - Windows 10/11 users
+- **🐧 [Linux Setup Guide](SETUP_LINUX.md)** - Ubuntu, Fedora, Debian users
+
+**Alternative: Manual Setup (Advanced)**
+
+- **⚙️ [Manual Setup Without Docker](SETUP_WITHOUT_DOCKER.md)** - For advanced users
 
 Each guide covers:
 
-1. Installing Docker CLI
+1. Installation (Docker or Python setup)
 2. Getting workshop files
-3. Starting the environment
+3. Configuring API keys
+4. Starting the environment
 
 ---
 
