@@ -1,219 +1,630 @@
-from langchain.prompts import PromptTemplate
+"""
+Query Rephrasing Module
+
+Optimizes user queries for better retrieval through:
+1. Expansion - Add synonyms and context
+2. Decomposition - Break compound queries into atomic parts
+3. Rewriting - Make context-dependent queries standalone
+4. Multi-Query Generation - Generate query variants for RAG Fusion
+5. Step-Back Prompting - Generate broader conceptual queries
+6. Complexity Analysis - Classify query complexity for routing
+"""
+
+from langchain_core.prompts import PromptTemplate
 from retrieval_playground.utils.model_manager import model_manager
+
+# ============================================================================
+# INITIALIZATION
+# ============================================================================
 
 # Global LLM instance
 llm = model_manager.get_llm()
 
-# Query expansion prompt template
+
+# ============================================================================
+# PROMPT TEMPLATES
+# ============================================================================
+
 QUERY_EXPANSION_TEMPLATE = PromptTemplate(
     input_variables=["query"],
-        template="""
-Given the query below, decide whether it needs expansion.  
+    template="""
+Given the query below, decide whether it needs expansion.
 
-Expand the query if any of the following apply:  
-- It contains abbreviations or acronyms → replace them with their full forms.  
-- It is too broad or vague → add minimal context to make it retrieval-ready.  
-- It lacks domain-specific terms that are typically associated with the topic → enrich with relevant context.  
-- It is just a direct phrase or incomplete question → reframe it into a clear query/question suitable for retrieval.  
+Expand the query if any of the following apply:
+- It contains abbreviations or acronyms → replace them with their full forms.
+- It is too broad or vague → add minimal context to make it retrieval-ready.
+- It lacks domain-specific terms that are typically associated with the topic → enrich with relevant context.
+- It is just a direct phrase or incomplete question → reframe it into a clear query/question suitable for retrieval.
 
-If none of these apply, return the query exactly as it is.  
+If none of these apply, return the query exactly as it is.
 
-The output should be a natural search query suitable for retrieval.  
-Do not include explanations, just return the final query text.  
+The output should be a natural search query suitable for retrieval.
+Do not include explanations, just return the final query text.
 
-Query: {query}  
+Query: {query}
 Output:
 """
 )
 
-# Query decomposition prompt template
+MULTI_QUERY_TEMPLATE = PromptTemplate(
+    input_variables=["query", "num_variants"],
+    template="""
+Generate {num_variants} alternative phrasings of the query below.
+Each variant should express the same intent using different wording, keywords, and perspectives.
+
+Rules:
+- Each variant must be standalone and retrieval-ready
+- Use synonyms and related terms
+- Vary the phrasing style (question, statement, keyword-based)
+- Maintain the original specificity level
+
+Return ONLY a valid Python list of {num_variants} strings.
+Example format: ["variant 1", "variant 2", "variant 3"]
+
+Query: {query}
+
+Output:
+"""
+)
+
 QUERY_DECOMPOSITION_TEMPLATE = PromptTemplate(
     input_variables=["query"],
     template="""
-Given the query below, check if it contains multiple intents or compound questions.  
-- If it does, break it down into smaller, atomic sub-queries.  
-- Each sub-query must be an independent, standalone query that can be retrieved without relying on the others.  
-- If not, return the query inside a single-item list.  
+Given the query below, check if it contains multiple intents or compound questions.
+- If it does, break it down into smaller, atomic sub-queries.
+- Each sub-query must be an independent, standalone query that can be retrieved without relying on the others.
+- If not, return the query inside a single-item list.
 
-Return only a valid Python list of sub-queries.  
+Return only a valid Python list of sub-queries.
 
-Query: {query}  
+Query: {query}
 Output:
 """
 )
 
-# Query rewriting prompt template
 QUERY_REWRITING_TEMPLATE = PromptTemplate(
     input_variables=["query", "previous_conversation_history"],
     template="""
-Given the current query and the previous conversation history:  
-- If the query depends on prior context (e.g., pronouns, references, incomplete information), rewrite it into a clear, standalone query suitable for retrieval.  
-- If it does not depend on prior context, return the query unchanged.  
+Given the current query and the previous conversation history:
+- If the query depends on prior context (e.g., pronouns, references, incomplete information), rewrite it into a clear, standalone query suitable for retrieval.
+- If it does not depend on prior context, return the query unchanged.
 
-Return only the final query text, without explanation or formatting.  
+Return only the final query text, without explanation or formatting.
 
-Query: {query}  
-Previous conversation history: {previous_conversation_history}  
+Query: {query}
+Previous conversation history: {previous_conversation_history}
 Output:
 """
 )
 
-# Self-querying prompt template
-SELF_QUERYING_TEMPLATE = PromptTemplate(
+STEP_BACK_TEMPLATE = PromptTemplate(
     input_variables=["query"],
     template="""
-Transform the input into a set of optimal search queries for retrieval.  
-- Queries should be clear, focused, and aligned with the user’s intent.  
-- Each query must be independent and standalone.  
+Given this specific question, generate a broader, more general question that captures the underlying concept.
 
-Return only a valid Python list of search queries.  
+The broader question should:
+- Help retrieve background knowledge needed to answer the specific question
+- Be more conceptual and less specific
+- Cover the domain/topic rather than the exact detail
 
-Input: {query}  
-Output:
+Return ONLY the broader question, nothing else.
+
+Specific Question: {query}
+
+Broader Question:
 """
 )
 
-def _parse_list_response(response: str, fallback: str) -> list[str]:
-    """Parse LLM response into list of queries."""
-    lines = [line.lstrip('•-*1234567890. ').strip() 
-             for line in response.split('\n') if line.strip()]
-    return lines if lines else [fallback]
 
-def _invoke_llm(template, **kwargs) -> str:
-    """Invoke LLM with template and return response."""
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
+def _invoke_llm(template: PromptTemplate, **kwargs) -> str:
+    """
+    Invoke LLM with template and return response.
+
+    Args:
+        template: PromptTemplate instance
+        **kwargs: Template variables
+
+    Returns:
+        LLM response string
+    """
     prompt = template.format(**kwargs)
     return llm.invoke(prompt).content.strip()
 
-def expand_query(query: str) -> str:
-    """Expand a query using LLM if beneficial."""
-    return _invoke_llm(QUERY_EXPANSION_TEMPLATE, query=query)
 
-def decompose_query(query: str) -> list[str]:
-    """Decompose a query into atomic sub-queries if it contains multiple intents."""
+def _parse_list_response(response: str, fallback: str) -> list[str]:
+    """
+    Parse LLM response into list of queries.
+
+    Handles various formats:
+    - Python list notation: ["query1", "query2"]
+    - Numbered list: 1. query1\n2. query2
+    - Bullet list: - query1\n- query2
+    - Markdown code blocks: ```python\n["query1"]\n```
+
+    Args:
+        response: LLM response string
+        fallback: Fallback query if parsing fails
+
+    Returns:
+        List of query strings
+    """
+    # Remove markdown code blocks if present
+    cleaned_response = response.strip()
+    if cleaned_response.startswith("```"):
+        # Extract content between ``` markers
+        lines = cleaned_response.split('\n')
+        # Remove first line (```python or ```) and last line (```)
+        lines = [line for line in lines if not line.strip().startswith("```")]
+        cleaned_response = '\n'.join(lines).strip()
+
+    # Try to eval as Python list first
+    try:
+        result = eval(cleaned_response)
+        if isinstance(result, list) and all(isinstance(item, str) for item in result):
+            return result
+    except:
+        pass
+
+    # Parse as line-based list
+    lines = [line.lstrip('•-*1234567890. ').strip()
+             for line in cleaned_response.split('\n')
+             if line.strip() and not line.strip().startswith('[') and not line.strip().startswith(']')]
+
+    # Filter out empty strings and non-query lines
+    lines = [line for line in lines if line and len(line) > 3]
+
+    return lines if lines else [fallback]
+
+
+def _is_atomic_query(query: str) -> bool:
+    """
+    Validate if query is atomic (single intent).
+
+    Simple heuristic:
+    - No multiple "and" conjunctions
+    - Max 1 question mark
+    - Not too long (< 20 words)
+
+    Args:
+        query: Query string to validate
+
+    Returns:
+        True if atomic, False otherwise
+    """
+    return (
+        query.count(" and ") <= 0 and
+        query.count("?") <= 1 and
+        len(query.split()) <= 20
+    )
+
+
+# ============================================================================
+# CORE QUERY TRANSFORMATION FUNCTIONS
+# ============================================================================
+
+def expand_query(query: str, num_variants: int = 1) -> list[str]:
+    """
+    Expand a query using LLM.
+
+    - num_variants=1: Single expansion (backward compatible)
+    - num_variants>1: Multi-query generation for RAG Fusion
+
+    Args:
+        query: Original query
+        num_variants: Number of query variants to generate
+
+    Returns:
+        List of expanded queries
+
+    Example:
+        >>> expand_query("What is RAG?")
+        ["What is Retrieval-Augmented Generation?"]
+
+        >>> expand_query("How does attention work?", num_variants=3)
+        ["How does attention work?", "Explain attention mechanism", "What is attention in transformers?"]
+    """
+    if num_variants == 1:
+        # Single query expansion (backward compatible)
+        result = _invoke_llm(QUERY_EXPANSION_TEMPLATE, query=query)
+        return [result]
+    else:
+        # Multi-query generation for RAG Fusion
+        result = _invoke_llm(MULTI_QUERY_TEMPLATE, query=query, num_variants=num_variants)
+        variants = _parse_list_response(result, query)
+
+        # Ensure we have exactly num_variants
+        if len(variants) < num_variants:
+            # Add original query if we don't have enough
+            variants.append(query)
+
+        return variants[:num_variants]
+
+
+def decompose_query(query: str, max_sub_queries: int = 5) -> list[str]:
+    """
+    Decompose a query into atomic sub-queries if it contains multiple intents.
+
+    Args:
+        query: Original query
+        max_sub_queries: Maximum number of sub-queries to generate
+
+    Returns:
+        List of atomic sub-queries
+
+    Example:
+        >>> decompose_query("What is RAG and how does it improve LLM outputs?")
+        ["What is RAG?", "How does RAG improve LLM outputs?"]
+    """
     response = _invoke_llm(QUERY_DECOMPOSITION_TEMPLATE, query=query)
-    return _parse_list_response(response, query)
+    sub_queries = _parse_list_response(response, query)
+
+    # Validate sub-queries are atomic
+    valid_sub_queries = [sq for sq in sub_queries if _is_atomic_query(sq)]
+
+    return valid_sub_queries[:max_sub_queries]
+
 
 def rewrite_query(query: str, previous_conversation_history: str = "") -> str:
-    """Rewrite a query to be context-independent if it depends on prior context."""
-    return _invoke_llm(QUERY_REWRITING_TEMPLATE, 
-                      query=query, 
-                      previous_conversation_history=previous_conversation_history)
+    """
+    Rewrite a query to be context-independent if it depends on prior context.
 
-def self_query(query: str) -> list[str]:
-    """Transform user input into optimal search queries for retrieval."""
-    response = _invoke_llm(SELF_QUERYING_TEMPLATE, query=query)
-    return _parse_list_response(response, query)
+    Args:
+        query: Original query
+        previous_conversation_history: Previous conversation context
+
+    Returns:
+        Rewritten standalone query
+
+    Example:
+        >>> rewrite_query("How does it work?", "We were discussing transformers")
+        "How do transformers work?"
+    """
+    return _invoke_llm(
+        QUERY_REWRITING_TEMPLATE,
+        query=query,
+        previous_conversation_history=previous_conversation_history
+    )
 
 
-# Example queries aligned with research papers theme
-QUERY_EXAMPLES = {
-    "expansion": [
-        {"query": "Generative AI transformer evaluation benchmarks"},
-        {"query": "tell me about computer vision"},
-    ],
-    
-    "decomposition": [
-        {"query":"What are neural networks and how do they work in computer vision applications?"},
-        {"query":"Explain machine learning algorithms, their types, and performance evaluation metrics"},
-    ],
-    
-    "rewriting": [
-        {"query":"How does it work?", "previous_conversation_history":"User asked about counterfactual generation in machine learning. Assistant explained that it's a method for creating hypothetical scenarios to understand causal relationships in data."},
-        {"query":"What about the computational complexity?", "previous_conversation_history":"User was learning about state space models in generative AI. Assistant explained that these models represent sequential data through hidden states and observable outputs."}
-    ],
-    
-    "self_querying": [
-        {"query":"I need to understand the current state of research in computer vision, particularly focusing on segmentation techniques for remote sensing applications. What are the key papers and methodologies?"},
-        {"query":"Help me understand generative AI models, their computational complexity, and the satisfiability problems in state space models. Focus on recent advances."}
+def step_back_query(query: str) -> tuple[str, str]:
+    """
+    Generate a broader conceptual query alongside the original.
+
+    Useful for:
+    - Ambiguous queries lacking context
+    - Queries needing background knowledge
+    - Multi-hop reasoning questions
+
+    Args:
+        query: Original specific query
+
+    Returns:
+        (broader_query, original_query) tuple
+
+    Example:
+        >>> step_back_query("What is the time complexity of BERT's self-attention?")
+        ("What is computational complexity in transformer models?",
+         "What is the time complexity of BERT's self-attention?")
+    """
+    broader_query = _invoke_llm(STEP_BACK_TEMPLATE, query=query)
+    return broader_query, query
+
+
+# ============================================================================
+# COMPLEXITY ANALYSIS
+# ============================================================================
+
+def classify_query_complexity(query: str) -> dict:
+    """
+    Classify query complexity to route to appropriate retrieval strategy.
+
+    Analyzes 5 signals:
+    1. Length (> 15 words)
+    2. Multi-hop indicators ("compared to", "in the context of", etc.)
+    3. Multiple questions
+    4. Comparison request
+    5. Analytical/reasoning request
+
+    Args:
+        query: Query string to classify
+
+    Returns:
+        {
+            "complexity": "simple" | "moderate" | "complex",
+            "score": int (0-5),
+            "signals": {
+                "length": bool,
+                "multi_hop": bool,
+                "multiple_questions": bool,
+                "comparison": bool,
+                "analytical": bool
+            },
+            "recommended_strategy": "standard_rag" | "multi_query" | "step_back" | "decompose"
+        }
+
+    Example:
+        >>> classify_query_complexity("What is RAG?")
+        {"complexity": "simple", "score": 0, ...}
+
+        >>> classify_query_complexity("Compare BERT and GPT architectures")
+        {"complexity": "moderate", "score": 2, ...}
+    """
+    complexity_score = 0
+    signals = {
+        "length": False,
+        "multi_hop": False,
+        "multiple_questions": False,
+        "comparison": False,
+        "analytical": False
+    }
+
+    # Signal 1: Query length
+    word_count = len(query.split())
+    if word_count > 15:
+        complexity_score += 1
+        signals["length"] = True
+
+    # Signal 2: Multi-hop indicators
+    multi_hop_markers = [
+        "compared to", "in the context of", "relationship between",
+        "how does", "what effect", "explain why"
     ]
-}
+    if any(marker in query.lower() for marker in multi_hop_markers):
+        complexity_score += 2
+        signals["multi_hop"] = True
+
+    # Signal 3: Multiple questions
+    if query.count("?") > 1 or (query.count(" and ") > 1 and query.count("?") >= 1):
+        complexity_score += 1
+        signals["multiple_questions"] = True
+
+    # Signal 4: Comparison request
+    comparison_markers = ["difference between", "compare", "versus", "vs", "vs.", "better than", "comparison"]
+    if any(marker in query.lower() for marker in comparison_markers):
+        complexity_score += 1
+        signals["comparison"] = True
+
+    # Signal 5: Analytical/reasoning request
+    analytical_markers = ["why", "how", "explain", "analyze", "evaluate"]
+    if any(query.lower().startswith(marker) for marker in analytical_markers):
+        complexity_score += 1
+        signals["analytical"] = True
+
+    # Determine complexity level and recommended strategy
+    if complexity_score <= 1:
+        complexity = "simple"
+        recommended_strategy = "standard_rag"
+    elif complexity_score == 2:
+        complexity = "moderate"
+        if signals["comparison"]:
+            recommended_strategy = "multi_query"
+        else:
+            recommended_strategy = "step_back"
+    else:
+        complexity = "complex"
+        if signals["multiple_questions"]:
+            recommended_strategy = "decompose"
+        elif signals["multi_hop"]:
+            recommended_strategy = "step_back"
+        else:
+            recommended_strategy = "multi_query"
+
+    return {
+        "complexity": complexity,
+        "score": complexity_score,
+        "signals": signals,
+        "recommended_strategy": recommended_strategy
+    }
 
 
-def demo_query_processing():
+# ============================================================================
+# RECIPROCAL RANK FUSION (For Multi-Query Results)
+# ============================================================================
+
+def reciprocal_rank_fusion(results_list: list[list[dict]], k: int = 60) -> list[dict]:
     """
-    Demonstrate all query processing techniques using the provided examples.
-    Prints results in a structured, easy-to-understand format.
+    Merge multiple ranked result lists using Reciprocal Rank Fusion.
+
+    RRF formula: score(d) = sum over all rankings R of: 1 / (k + rank_R(d))
+    where k is a constant (typically 60)
+
+    Args:
+        results_list: List of result lists, each containing dicts with 'chunk_id' or 'id'
+        k: RRF constant (default 60)
+
+    Returns:
+        Merged and re-ranked list of results
+
+    Example:
+        >>> results1 = [{"chunk_id": "doc1"}, {"chunk_id": "doc2"}]
+        >>> results2 = [{"chunk_id": "doc2"}, {"chunk_id": "doc3"}]
+        >>> fused = reciprocal_rank_fusion([results1, results2])
+        >>> fused[0]["chunk_id"]
+        "doc2"  # Appears in both lists, ranked first
+    """
+    fused_scores = {}
+    doc_map = {}
+
+    for results in results_list:
+        for rank, doc in enumerate(results):
+            # Get document ID
+            doc_id = doc.get("chunk_id") or doc.get("id") or str(doc)
+
+            # Track fused score
+            if doc_id not in fused_scores:
+                fused_scores[doc_id] = 0
+                doc_map[doc_id] = doc
+
+            # RRF scoring
+            fused_scores[doc_id] += 1 / (k + rank)
+
+    # Sort by fused score (descending)
+    ranked_ids = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
+
+    # Return docs in fused rank order
+    return [doc_map[doc_id] for doc_id, score in ranked_ids]
+
+
+# ============================================================================
+# MAIN ORCHESTRATION
+# ============================================================================
+
+def optimize_query_for_retrieval(
+    query: str,
+    context: str = "",
+    auto_strategy: bool = True
+) -> dict:
+    """
+    Main orchestration function for query optimization.
+
+    Automatically selects and applies the best strategy based on query complexity.
+
+    Args:
+        query: Original user query
+        context: Previous conversation context (optional)
+        auto_strategy: Auto-select strategy based on complexity (default True)
+
+    Returns:
+        {
+            "original_query": str,
+            "processed_queries": list[str],
+            "strategy": str,
+            "complexity": dict,
+            "metadata": dict
+        }
+
+    Example:
+        >>> result = optimize_query_for_retrieval("Compare BERT and GPT")
+        >>> result["strategy"]
+        "multi_query"
+        >>> len(result["processed_queries"])
+        3
+    """
+    # Step 1: Rewrite if context-dependent
+    if context:
+        query = rewrite_query(query, context)
+
+    # Step 2: Classify complexity
+    complexity_analysis = classify_query_complexity(query)
+
+    # Step 3: Apply appropriate strategy
+    if auto_strategy:
+        strategy = complexity_analysis["recommended_strategy"]
+    else:
+        strategy = "standard_rag"
+
+    # Step 4: Process query based on strategy
+    if strategy == "standard_rag":
+        processed_queries = [expand_query(query, num_variants=1)[0]]
+
+    elif strategy == "multi_query":
+        processed_queries = expand_query(query, num_variants=3)
+
+    elif strategy == "step_back":
+        broader, specific = step_back_query(query)
+        processed_queries = [broader, specific]
+
+    elif strategy == "decompose":
+        processed_queries = decompose_query(query)
+
+    else:
+        processed_queries = [query]
+
+    return {
+        "original_query": query,
+        "processed_queries": processed_queries,
+        "strategy": strategy,
+        "complexity": complexity_analysis,
+        "metadata": {
+            "num_queries": len(processed_queries),
+            "requires_fusion": strategy in ["multi_query", "decompose"],
+            "context_used": bool(context)
+        }
+    }
+
+
+# ============================================================================
+# DEMO & EXAMPLES
+# ============================================================================
+
+def demo_query_rephrasing():
+    """
+    Demonstrate all query rephrasing techniques with examples.
     """
     print("=" * 80)
-    print("QUERY PROCESSING TECHNIQUES DEMO")
+    print("QUERY REPHRASING DEMO")
     print("=" * 80)
-    
-    # Query Expansion Demo
-    print("\n🔍 QUERY EXPANSION")
+
+    # 1. Single Query Expansion
+    print("\n🔍 1. SINGLE QUERY EXPANSION")
     print("-" * 50)
-    print("Purpose: Add synonyms, related terms, or contextual entities")
-    print()
-    
-    for i, example in enumerate(QUERY_EXAMPLES["expansion"], 1):
-        query = example["query"]
-        print(f"{i}. Original: {query}")
-        try:
-            expanded = expand_query(query)
-            print(f"   Expanded: {expanded}")
-        except Exception as e:
-            print(f"   Error: {e}")
-        print()
-    
-    # Query Decomposition Demo
-    print("\n📋 QUERY DECOMPOSITION")
+    query = "What is RAG?"
+    print(f"Original: {query}")
+    result = expand_query(query, num_variants=1)
+    print(f"Expanded: {result[0]}")
+
+    # 2. Multi-Query Generation (RAG Fusion)
+    print("\n🔍 2. MULTI-QUERY GENERATION (RAG Fusion)")
     print("-" * 50)
-    print("Purpose: Break compound queries into atomic sub-queries")
-    print()
-    
-    for i, example in enumerate(QUERY_EXAMPLES["decomposition"], 1):
-        query = example["query"]
-        print(f"{i}. Original: {query}")
-        try:
-            sub_queries = decompose_query(query)
-            print(f"   Sub-queries:")
-            for j, sub_query in enumerate(sub_queries, 1):
-                print(f"{sub_query}")
-        except Exception as e:
-            print(f"   Error: {e}")
-        print()
-    
-    # Query Rewriting Demo
-    print("\n✏️  QUERY REWRITING")
+    query = "How does transformer attention work?"
+    print(f"Original: {query}")
+    variants = expand_query(query, num_variants=3)
+    print("Variants:")
+    for i, v in enumerate(variants, 1):
+        print(f"  {i}. {v}")
+
+    # 3. Query Decomposition
+    print("\n📋 3. QUERY DECOMPOSITION")
     print("-" * 50)
-    print("Purpose: Make context-dependent queries standalone")
-    print()
-    
-    for i, example in enumerate(QUERY_EXAMPLES["rewriting"], 1):
-        query = example["query"]
-        context = example["previous_conversation_history"]
-        print(f"{i}. Context-dependent: {query}")
-        print(f"   Context: {context}")
-        try:
-            rewritten = rewrite_query(query, context)
-            print(f"   Standalone: {rewritten}")
-        except Exception as e:
-            print(f"   Error: {e}")
-        print()
-    
-    # Self-Querying Demo
-    print("\n🎯 SELF-QUERYING")
+    query = "What is RAG and how does it improve LLM performance?"
+    print(f"Original: {query}")
+    sub_queries = decompose_query(query)
+    print("Sub-queries:")
+    for i, sq in enumerate(sub_queries, 1):
+        print(f"  {i}. {sq}")
+
+    # 4. Step-Back Prompting
+    print("\n🔙 4. STEP-BACK PROMPTING")
     print("-" * 50)
-    print("Purpose: Transform complex input into optimal search queries")
-    print()
-    
-    for i, example in enumerate(QUERY_EXAMPLES["self_querying"], 1):
-        query = example["query"]
-        print(f"{i}. Complex Input: {query}")
-        try:
-            search_queries = self_query(query)
-            print(f"   Optimal Search Queries:")
-            for j, search_query in enumerate(search_queries, 1):
-                print(f"{search_query}")
-        except Exception as e:
-            print(f"   Error: {e}")
+    query = "What is the time complexity of BERT's self-attention?"
+    print(f"Specific: {query}")
+    broader, _ = step_back_query(query)
+    print(f"Broader: {broader}")
+
+    # 5. Complexity Classification
+    print("\n📊 5. COMPLEXITY CLASSIFICATION")
+    print("-" * 50)
+    queries = [
+        "What is RAG?",
+        "Compare BERT and GPT",
+        "Explain how transformers use attention and why they outperform RNNs"
+    ]
+    for query in queries:
+        result = classify_query_complexity(query)
+        print(f"Query: {query}")
+        print(f"  Complexity: {result['complexity']} (score: {result['score']})")
+        print(f"  Strategy: {result['recommended_strategy']}")
         print()
-    
-    print("=" * 80)
+
+    # 6. Full Orchestration
+    print("\n🎯 6. FULL ORCHESTRATION")
+    print("-" * 50)
+    query = "Compare the performance of BERT and GPT-3"
+    print(f"Query: {query}")
+    result = optimize_query_for_retrieval(query)
+    print(f"Strategy: {result['strategy']}")
+    print(f"Processed Queries ({result['metadata']['num_queries']}):")
+    for i, pq in enumerate(result['processed_queries'], 1):
+        print(f"  {i}. {pq}")
+
+    print("\n" + "=" * 80)
     print("DEMO COMPLETE")
     print("=" * 80)
 
 
 if __name__ == "__main__":
-    demo_query_processing()
-
-
+    demo_query_rephrasing()

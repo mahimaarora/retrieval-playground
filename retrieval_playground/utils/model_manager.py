@@ -5,7 +5,6 @@ from typing import Tuple
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
 from retrieval_playground.utils.pylogger import get_python_logger
 from retrieval_playground.utils import constants
 
@@ -17,7 +16,7 @@ class ModelManager:
 
     _instance: Optional["ModelManager"] = None
     _llm: Optional[ChatGoogleGenerativeAI] = None
-    _embeddings: Optional[GoogleGenerativeAIEmbeddings] = None
+    _embeddings: Optional[GoogleGenerativeAIEmbeddings] = None  # Changed to Google embeddings
     _logger = get_python_logger(log_level="info")
 
     def __new__(cls) -> "ModelManager":
@@ -42,12 +41,12 @@ class ModelManager:
 
         return self._llm
 
-    def get_embeddings(self) -> HuggingFaceEmbeddings:
+    def get_embeddings(self) -> GoogleGenerativeAIEmbeddings:
         """
         Get shared instances of embeddings model.
 
         Returns:
-            HuggingFaceEmbeddings:
+            GoogleGenerativeAIEmbeddings:
                 Shared embeddings model instance
         """
         if self._embeddings is None:
@@ -69,10 +68,9 @@ class ModelManager:
                 max_retries=3,
             )
 
-            # Initialize embeddings
-            self._embeddings = HuggingFaceEmbeddings(
-                model_name=constants.DEFAULT_EMBEDDING_MODEL,
-                model_kwargs={"trust_remote_code": True}
+            # Initialize embeddings (Google Gemini)
+            self._embeddings = GoogleGenerativeAIEmbeddings(
+                model="models/gemini-embedding-001"
             )
 
             self._logger.info(

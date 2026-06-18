@@ -8,7 +8,7 @@ import json
 
 from retrieval_playground.utils import config, constants
 from retrieval_playground.utils.model_manager import model_manager
-from retrieval_playground.src.pre_retrieval.chunking_strategies import ChunkingStrategy
+from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStrategy
 
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np

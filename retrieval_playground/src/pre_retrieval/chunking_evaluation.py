@@ -10,7 +10,7 @@ import pandas as pd
 
 from retrieval_playground.src.baseline_rag import RAG
 from retrieval_playground.src.evaluation import RAGEvaluator
-from retrieval_playground.src.pre_retrieval.chunking_strategies import ChunkingStrategy
+from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStrategy
 from retrieval_playground.utils.pylogger import get_python_logger
 from retrieval_playground.utils import constants, config
 
@@ -38,8 +38,8 @@ class ChunkingEvaluator:
         """Evaluate a single chunking strategy."""
         self.logger.info(f"Evaluating {strategy.value} strategy...")
 
-        # Initialize RAG with specific collection path
-        rag = RAG(strategy=strategy)
+        # Initialize RAG with cloud Qdrant (use_cloud=True)
+        rag = RAG(strategy=strategy, use_cloud=True)
 
         # Process queries
         print("Generating answers for queries...")
@@ -65,9 +65,9 @@ class ChunkingEvaluator:
         self.logger.info("Starting evaluation of all chunking strategies...")
 
         strategies = [
-            ChunkingStrategy.BASELINE,
             ChunkingStrategy.RECURSIVE_CHARACTER,
-            ChunkingStrategy.UNSTRUCTURED,
+            ChunkingStrategy.PARENT_CHILD,
+            ChunkingStrategy.CONTEXTUAL,
             ChunkingStrategy.DOCLING
         ]
 
@@ -150,6 +150,14 @@ class ChunkingEvaluator:
 
 
 if __name__ == "__main__":
-    evaluator = ChunkingEvaluator()
+    # Evaluate all 15 test queries with all 4 RAGAS metrics
+    metrics = ["answer_relevancy", "faithfulness", "context_precision", "context_recall"]
+    evaluator = ChunkingEvaluator(query_count=15, metrics=metrics)
+
     df = evaluator.evaluate_all_strategies()
     evaluator.print_results(df)
+
+    # Save results to CSV
+    output_file = "retrieval_playground/tests/chunking_evaluation_results.csv"
+    df.to_csv(output_file, index=False)
+    print(f"\n💾 Results saved to {output_file}")

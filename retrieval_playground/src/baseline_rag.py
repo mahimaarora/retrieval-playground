@@ -3,8 +3,8 @@ Baseline RAG pipeline for document retrieval and question answering.
 """
 from typing import List, Dict, Any
 
-from langchain.schema import Document
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
 
 from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.utils.pylogger import get_python_logger

@@ -1,32 +1,31 @@
-docling==2.48.0
-langchain==0.3.27
-langchain_community==0.3.29
-langchain-experimental==0.3.4
-langchain-google-genai==2.1.10
-langchain-huggingface==0.3.1
-langchain-qdrant==0.2.0
-langchain-docling==1.0.0
-langgraph==0.6.7
-qdrant-client==1.15.1
-pydantic==2.11.7
-pathlib==1.0.1
-uvicorn==0.35.0
-sentence-transformers==5.1.0
-pypdf==6.0.0
-pdfminer.six==20250506
-pi_heif==1.1.0
-pdf2image==1.17.0
-unstructured_inference==1.0.5
-ragas==0.3.2
-unstructured==0.18.14
-unstructured[docs]
-langchain-text-splitters==0.3.11
-langchain-experimental==0.3.4
-semantic_router==0.1.11
-seaborn==0.13.2
-ipykernel==6.30.1
-jupyter==1.1.1
-grpcio==1.60.1
-pytesseract==0.3.13
-pillow==11.3.0
-unstructured[local-inference]
+# Core LangChain (Latest compatible versions)
+langchain
+langchain-core
+langchain-community
+
+# Google Gemini (LLM + Embeddings)
+langchain-google-genai
+langchain-google-vertexai
+
+# Vector Database
+langchain-qdrant
+qdrant-client
+
+# PDF Processing
+pypdf
+
+# Document Processing & Chunking
+langchain-text-splitters
+docling
+langchain-docling
+
+# Routing
+semantic-router
+
+# Evaluation (RAGAS - let pip resolve compatible version)
+ragas
+datasets
+
+# Utilities
+pydantic
+uvicorn

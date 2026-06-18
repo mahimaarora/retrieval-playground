@@ -26,7 +26,7 @@ load_env_file()
 PYTHON_LOG_LEVEL = os.getenv("PYTHON_LOG_LEVEL", "info")
 
 # Model configuration  
-MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-flash-lite")
+MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro")
 
 # API Configuration
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
