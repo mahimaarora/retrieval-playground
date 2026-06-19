@@ -22,6 +22,13 @@ langchain-docling
 # Routing
 semantic-router
 
+# Hybrid Search (BM25)
+rank-bm25
+
+# Reranking (optional models)
+flashrank
+sentence-transformers
+
 # Evaluation (RAGAS - let pip resolve compatible version)
 ragas
 datasets

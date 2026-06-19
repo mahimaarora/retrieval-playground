@@ -3,7 +3,8 @@ from qdrant_client import QdrantClient
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CrossEncoderReranker
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
-from typing import Dict, List, Any
+from langchain_core.documents import Document
+from typing import Dict, List, Any, Literal, Optional
 import json
 
 from retrieval_playground.utils import config, constants
@@ -13,14 +14,68 @@ from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStra
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
+# Optional imports for additional rerankers
+try:
+    from flashrank import Ranker, RerankRequest
+    FLASHRANK_AVAILABLE = True
+except ImportError:
+    FLASHRANK_AVAILABLE = False
+
+try:
+    from sentence_transformers import CrossEncoder as STCrossEncoder
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
+# Type hints
+RerankModel = Literal["huggingface", "bge", "flashrank"]
+
 
 class Reranker:
-    """Reranking retriever using cross-encoder models."""
-    
-    def __init__(self, strategy: ChunkingStrategy = ChunkingStrategy.UNSTRUCTURED, use_cloud: bool = True, qdrant_client: QdrantClient = None, top_k: int = 20, top_n: int = 3):
+    """
+    Reranking retriever with multiple model options.
+
+    Models:
+    - "huggingface": Default cross-encoder (current)
+    - "bge": BGE-reranker-v2-m3 (best free option, ~600MB)
+    - "flashrank": Fast CPU reranking (<20ms)
+
+    Example:
+        # Default model
+        reranker = Reranker()
+
+        # Use BGE (best quality)
+        reranker = Reranker(model="bge")
+
+        # Use FlashRank (fastest)
+        reranker = Reranker(model="flashrank")
+    """
+
+    def __init__(
+        self,
+        strategy: ChunkingStrategy = ChunkingStrategy.UNSTRUCTURED,
+        use_cloud: bool = True,
+        qdrant_client: QdrantClient = None,
+        top_k: int = 20,
+        top_n: int = 3,
+        model: RerankModel = "huggingface"
+    ):
+        """
+        Initialize reranker.
+
+        Args:
+            strategy: Chunking strategy
+            use_cloud: Use cloud Qdrant (True) or local (False)
+            qdrant_client: Optional pre-configured Qdrant client
+            top_k: Number of documents to retrieve before reranking
+            top_n: Number of documents to return after reranking
+            model: Which reranker model to use
+        """
         self.strategy = strategy
         self.top_k = top_k
         self.top_n = top_n
+        self.model = model
+
         if use_cloud:
             self.qdrant_client = QdrantClient(url=constants.QDRANT_URL, api_key=constants.QDRANT_KEY)
         elif qdrant_client is None:
@@ -28,33 +83,133 @@ class Reranker:
             self.qdrant_client = QdrantClient(path=str(self.qdrant_path))
         else:
             self.qdrant_client = qdrant_client
+
         self._setup_reranker_retriever()
-        print("✅ Reranker initialized")
+        print(f"✅ Reranker initialized (model: {model})")
     
     def _setup_reranker_retriever(self):
         """Initialize the reranking retriever."""
-        
+
         self.embeddings = model_manager.get_embeddings()
-        vector_store = QdrantVectorStore(
+        self.vector_store = QdrantVectorStore(
             client=self.qdrant_client,
             collection_name=self.strategy.value,
             embedding=self.embeddings,
         )
 
-        self.retriever = vector_store.as_retriever(search_kwargs={"k": self.top_k})
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": self.top_k})
 
-        model = HuggingFaceCrossEncoder(
-            model_name=constants.RERANKER_MODEL,
-            model_kwargs={"trust_remote_code": True}
-        )
-        compressor = CrossEncoderReranker(model=model, top_n=self.top_n)
-        self.reranker_retriever = ContextualCompressionRetriever(
-            base_compressor=compressor, base_retriever=self.retriever
-        )
+        # Initialize model based on selection
+        if self.model == "huggingface":
+            # Default HuggingFace cross-encoder (current implementation)
+            model = HuggingFaceCrossEncoder(
+                model_name=constants.RERANKER_MODEL,
+                model_kwargs={"trust_remote_code": True}
+            )
+            compressor = CrossEncoderReranker(model=model, top_n=self.top_n)
+            self.reranker_retriever = ContextualCompressionRetriever(
+                base_compressor=compressor, base_retriever=self.retriever
+            )
+
+        elif self.model == "bge":
+            # BGE Reranker v2-m3 (best free option)
+            if not SENTENCE_TRANSFORMERS_AVAILABLE:
+                raise ImportError(
+                    "sentence-transformers required for BGE reranker. "
+                    "Install with: pip install sentence-transformers"
+                )
+            self.bge_model = STCrossEncoder("BAAI/bge-reranker-v2-m3", max_length=512)
+            self.reranker_retriever = None  # Use custom rerank method
+
+        elif self.model == "flashrank":
+            # FlashRank (fast CPU)
+            if not FLASHRANK_AVAILABLE:
+                raise ImportError(
+                    "flashrank required for FlashRank reranker. "
+                    "Install with: pip install flashrank"
+                )
+            self.flashrank_model = Ranker(model_name="ms-marco-MiniLM-L-12-v2")
+            self.reranker_retriever = None  # Use custom rerank method
+
+        else:
+            raise ValueError(f"Unknown model: {self.model}")
     
-    def retrieve(self, query: str):
-        """Retrieve and rerank documents for a query."""
-        return self.reranker_retriever.invoke(query)
+    def retrieve(self, query: str) -> List[Document]:
+        """
+        Retrieve and rerank documents for a query.
+
+        Args:
+            query: Search query
+
+        Returns:
+            Top-n reranked documents
+        """
+        # Get initial documents
+        initial_docs = self.retriever.invoke(query)
+
+        if self.model == "huggingface":
+            # Use LangChain's reranker retriever
+            return self.reranker_retriever.invoke(query)
+
+        elif self.model == "bge":
+            # BGE reranking
+            return self._rerank_bge(initial_docs, query)
+
+        elif self.model == "flashrank":
+            # FlashRank reranking
+            return self._rerank_flashrank(initial_docs, query)
+
+    def _rerank_bge(self, documents: List[Document], query: str) -> List[Document]:
+        """Rerank using BGE model."""
+        if not documents:
+            return []
+
+        # Prepare query-document pairs
+        pairs = [[query, doc.page_content] for doc in documents]
+
+        # Get scores
+        scores = self.bge_model.predict(pairs)
+
+        # Sort by score
+        doc_scores = list(zip(documents, scores))
+        sorted_docs = sorted(doc_scores, key=lambda x: x[1], reverse=True)[:self.top_n]
+
+        # Add metadata
+        reranked_docs = []
+        for doc, score in sorted_docs:
+            doc.metadata["rerank_score"] = float(score)
+            doc.metadata["reranker"] = "bge"
+            reranked_docs.append(doc)
+
+        return reranked_docs
+
+    def _rerank_flashrank(self, documents: List[Document], query: str) -> List[Document]:
+        """Rerank using FlashRank."""
+        if not documents:
+            return []
+
+        # Prepare passages
+        passages = [
+            {"id": i, "text": doc.page_content}
+            for i, doc in enumerate(documents)
+        ]
+
+        # Rerank
+        rerank_request = RerankRequest(query=query, passages=passages)
+        results = self.flashrank_model.rerank(rerank_request)
+
+        # Sort and take top_n
+        sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)[:self.top_n]
+
+        # Map back to documents
+        reranked_docs = []
+        for result in sorted_results:
+            doc = documents[result["id"]]
+            doc.metadata["rerank_score"] = float(result["score"])
+            doc.metadata["reranker"] = "flashrank"
+            reranked_docs.append(doc)
+
+        return reranked_docs
     
     @staticmethod
     def load_test_queries() -> List[Dict[str, Any]]:
