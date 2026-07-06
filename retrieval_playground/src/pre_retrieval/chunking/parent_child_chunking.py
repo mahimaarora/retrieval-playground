@@ -7,7 +7,7 @@ BEST FOR: Production RAG systems, complex Q&A
 """
 
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_qdrant import QdrantVectorStore
 from langchain_core.documents import Document
@@ -55,6 +55,50 @@ class ParentChildChunking(BaseChunking):
         )
 
         self.logger.info("✅ Parent-Child Chunking initialized")
+
+    def chunk_single_pdf(self, pdf_path: str) -> List[Document]:
+        """Chunk a single PDF into parent-child structure."""
+        pdf_file = Path(pdf_path)
+        pdf_docs = self.load_pdf(pdf_file)
+
+        # Create parent chunks
+        parent_chunks = self.parent_splitter.split_documents(pdf_docs)
+
+        all_chunks = []
+        for parent_idx, parent_doc in enumerate(parent_chunks):
+            # Generate parent ID (consistent with chunk_documents)
+            parent_id = f"{pdf_file.stem}_parent_{parent_idx}"
+
+            # Create parent document with full metadata
+            parent_document = Document(
+                page_content=parent_doc.page_content,
+                metadata={
+                    "source": pdf_file.name,
+                    "chunking_strategy": self.strategy_name,
+                    "chunk_type": "parent",
+                    "parent_id": parent_id,
+                    "parent_index": parent_idx
+                }
+            )
+            all_chunks.append(parent_document)
+
+            # Create child chunks from this parent
+            child_chunks = self.child_splitter.split_documents([parent_doc])
+
+            for child_chunk in child_chunks:
+                child_chunk.metadata["source"] = pdf_file.name
+                child_chunk.metadata["chunking_strategy"] = self.strategy_name
+                child_chunk.metadata["chunk_type"] = "child"
+                child_chunk.metadata["parent_id"] = parent_id
+                child_chunk.metadata["parent_chunk_index"] = parent_idx
+
+            self.add_chunk_ids(child_chunks)
+            all_chunks.extend(child_chunks)
+
+        # Add chunk IDs to parent chunks
+        self.add_chunk_ids([chunk for chunk in all_chunks if chunk.metadata.get("chunk_type") == "parent"])
+
+        return all_chunks
 
     def chunk_documents(
         self,

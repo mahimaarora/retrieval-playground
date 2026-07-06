@@ -25,6 +25,7 @@ from docling_core.types.doc import DocItemLabel, TextItem, TableItem, PictureIte
 
 from .chunk_models import TextChunk, TableChunk, ImageChunk
 from retrieval_playground.utils.model_manager import model_manager
+from retrieval_playground.utils import config
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +51,10 @@ class DoclingMultimodalParser:
             table_mode: Table extraction mode - "accurate" or "fast"
             do_cell_matching: Map table structure to PDF cells
             generate_descriptions: Enable AI-generated descriptions for images/tables
-            images_output_dir: Directory to save extracted images
+            images_output_dir: Directory to save extracted images (defaults to data/images)
         """
-        self.images_output_dir = Path(images_output_dir).resolve() if images_output_dir else Path("data/images").resolve()
+        # Use config constant for images directory
+        self.images_output_dir = Path(images_output_dir).resolve() if images_output_dir else config.DOCLING_IMAGES_DIR
         self.images_output_dir.mkdir(parents=True, exist_ok=True)
 
         # Get LLM from model manager for AI descriptions
@@ -95,6 +97,14 @@ class DoclingMultimodalParser:
         self.converter = DocumentConverter(
             format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pdf_pipeline_options)}
         )
+
+    def _convert_to_relative_path(self, absolute_path: Path) -> str:
+        """Convert absolute path to relative path from project root."""
+        abs_str = str(absolute_path.resolve())
+        if "retrieval-playground" in abs_str:
+            parts = abs_str.split("retrieval-playground/")
+            return parts[-1] if len(parts) > 1 else abs_str
+        return abs_str
 
     def parse(self, pdf_path: str) -> List[Chunk]:
         """
@@ -219,7 +229,6 @@ class DoclingMultimodalParser:
             except (ValueError, IndexError):
                 pass
 
-        # Save image to file
         if image_base64:
             doc_name = Path(source_doc).stem
             image_filename = f"{doc_name}_{uuid.uuid4()}.{image_format}"
@@ -227,7 +236,7 @@ class DoclingMultimodalParser:
             try:
                 with open(image_path, "wb") as f:
                     f.write(base64.b64decode(image_base64))
-                image_path = str(image_path.resolve())
+                image_path = self._convert_to_relative_path(image_path)
             except Exception as e:
                 logger.warning(f"    ⚠️ Failed to save image: {e}")
                 image_path = None

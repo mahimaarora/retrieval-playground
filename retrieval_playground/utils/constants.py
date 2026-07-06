@@ -25,8 +25,9 @@ load_env_file()
 # Logging configuration
 PYTHON_LOG_LEVEL = os.getenv("PYTHON_LOG_LEVEL", "info")
 
-# Model configuration  
+# Model configuration
 MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro")
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "models/gemini-embedding-001")
 
 # API Configuration
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -44,16 +45,23 @@ DEFAULT_TEMPERATURE = 0.1
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_TIMEOUT = None
 
-# Embedding model
-DEFAULT_EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-0.6B"
-RERANKER_MODEL = "BAAI/bge-reranker-base"
+# Reranker model
+RERANKER_MODEL = "ms-marco-MiniLM-L-12-v2"
 
-# ALternative Lite Embedding model 
-# DEFAULT_EMBEDDING_MODEL = "Alibaba-NLP/gte-multilingual-base"
-# RERANKER_MODEL = "Alibaba-NLP/gte-multilingual-reranker-base"
+# Supported Qdrant collections (from chunking strategies)
+SUPPORTED_COLLECTIONS = [
+    "recursive_character",
+    "parent_child",
+    "contextual",
+    "docling",
+    "hybrid"
+]
 
 # Data paths (relative to package)
 DATA_SUBDIR = "data"
 SAMPLE_PAPERS_SUBDIR = "sample_research_papers"
 TESTS_SUBDIR = "tests"
 UTILS_SUBDIR = "utils"
+
+# Docling-specific paths
+DOCLING_IMAGES_SUBDIR = "images"  # Directory for extracted images (within data/)

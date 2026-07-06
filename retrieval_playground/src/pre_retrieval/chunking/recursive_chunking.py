@@ -7,8 +7,10 @@ BEST FOR: Most documents, learning RAG, fast iteration
 """
 
 from pathlib import Path
+from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_qdrant import QdrantVectorStore
+from langchain_core.documents import Document
 
 from .base_chunking import BaseChunking
 
@@ -41,6 +43,15 @@ class RecursiveChunking(BaseChunking):
         )
 
         self.logger.info("✅ Recursive Character Chunking initialized")
+
+    def chunk_single_pdf(self, pdf_path: str) -> List[Document]:
+        """Chunk a single PDF without storing to vector database."""
+        pdf_file = Path(pdf_path)
+        pdf_docs = self.load_pdf(pdf_file)
+        self.add_metadata(pdf_docs, pdf_file)
+        chunks = self.splitter.split_documents(pdf_docs)
+        self.add_chunk_ids(chunks)
+        return chunks
 
     def chunk_documents(
         self,

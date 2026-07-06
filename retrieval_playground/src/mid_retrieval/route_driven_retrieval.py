@@ -1,337 +1,196 @@
 """
-Route-Driven Retrieval: Use semantic routes to control retrieval
+Route-Driven Retrieval: Automatic method selection based on query type
 
 Automatically:
-- Detects query type (factual, comparison, analytical, etc.)
+- Detects query type (factual, comparison, analytical, greeting, etc.)
 - Selects appropriate retrieval method
-- Chooses right tool (vector_db, sql, web)
-- Decides when to use reranking
+- Adjusts parameters based on complexity
 
 No manual configuration needed!
-
-Simple to use:
-    route_retriever = RouteRetriever()
-    results = route_retriever.search("your query")
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 from langchain_core.documents import Document
-from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
 
-from retrieval_playground.utils import config, constants
-from retrieval_playground.utils.model_manager import model_manager
-from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStrategy
 from retrieval_playground.src.pre_retrieval.routing import route_with_complexity_analysis
+from retrieval_playground.src.pre_retrieval.query_rephrasing import expand_query
 from retrieval_playground.src.mid_retrieval.hybrid_search import HybridRetriever
-
-# Optional imports
-try:
-    from retrieval_playground.src.pre_retrieval.query_rephrasing import expand_query, reciprocal_rank_fusion
-    MULTI_QUERY_AVAILABLE = True
-except ImportError:
-    MULTI_QUERY_AVAILABLE = False
+from retrieval_playground.utils.model_manager import model_manager
 
 
 class RouteRetriever:
     """
-    Smart retriever that uses semantic routing.
-
-    How it works:
-    1. Routes query to appropriate category (factual, comparison, etc.)
-    2. Each route has pre-configured retrieval settings
-    3. Automatically selects method, tool, and reranking
+    Automatic retrieval method selection based on query type.
 
     Routes:
     - greetings → No retrieval
     - factual_qa → Hybrid search
-    - comparison → Multi-query if available
-    - analytical_qa → Multi-query + reranking
+    - comparison → Multi-query
+    - analytical_qa → Multi-query
     - definition → Hybrid search
-    - procedural → Dense search
+    - procedural → Hybrid search
 
     Example:
-        route_retriever = RouteRetriever()
-
-        # Factual query → Hybrid search
-        results = route_retriever.search("What is BERT?")
-
-        # Comparison → Multi-query
-        results = route_retriever.search("Compare BERT and GPT-3")
-
-        # Greeting → No retrieval
-        results = route_retriever.search("Hello!")
+        retriever = RouteRetriever(collection_name="hybrid")
+        results = retriever.search("What is BERT?")
     """
 
     def __init__(
         self,
-        strategy: ChunkingStrategy = ChunkingStrategy.RECURSIVE_CHARACTER,
-        use_cloud: bool = True,
-        qdrant_client: Optional[QdrantClient] = None
+        collection_name: str = "hybrid",
+        use_cloud: bool = True
     ):
         """
-        Initialize route-driven retriever.
-
         Args:
-            strategy: Chunking strategy to use
-            use_cloud: Use cloud Qdrant (True) or local (False)
-            qdrant_client: Optional pre-configured Qdrant client
+            collection_name: Qdrant collection (hybrid collection recommended)
+            use_cloud: Use cloud Qdrant vs local
         """
-        self.strategy = strategy
+        self.collection_name = collection_name
 
-        # Setup Qdrant client
-        if use_cloud:
-            self.qdrant_client = QdrantClient(
-                url=constants.QDRANT_URL,
-                api_key=constants.QDRANT_KEY
-            )
-        elif qdrant_client is None:
-            qdrant_path = config.QDRANT_DIR / strategy.value
-            self.qdrant_client = QdrantClient(path=str(qdrant_path))
-        else:
-            self.qdrant_client = qdrant_client
+        # Initialize hybrid retriever (supports both hybrid and dense search)
+        self.hybrid_retriever = HybridRetriever(collection_name=collection_name)
 
-        # Setup vector store
+        # Get embeddings for dense-only fallback
         self.embeddings = model_manager.get_embeddings()
-        self.vector_store = QdrantVectorStore(
-            client=self.qdrant_client,
-            collection_name=strategy.value,
-            embedding=self.embeddings
-        )
-
-        # Lazy loading for retrieval methods
-        self._hybrid_retriever = None
 
         print("✅ Route-driven retriever initialized")
 
-    def _get_hybrid_retriever(self) -> HybridRetriever:
-        """Get or create hybrid retriever (lazy loading)."""
-        if self._hybrid_retriever is None:
-            self._hybrid_retriever = HybridRetriever(
-                strategy=self.strategy,
-                use_cloud=False,
-                qdrant_client=self.qdrant_client
-            )
-        return self._hybrid_retriever
-
     def search(
         self,
-        query: str,
-        verbose: bool = False
+        query: str
     ) -> List[Document]:
         """
-        Route-driven search with automatic method selection.
+        Automatic method selection based on query analysis.
 
         Args:
             query: Search query
-            verbose: Print routing and configuration details
 
         Returns:
             Retrieved documents (empty list if no retrieval needed)
-
-        Example:
-            # Automatic routing
-            results = route_retriever.search("What is BERT?")
-
-            # With details
-            results = route_retriever.search("What is BERT?", verbose=True)
         """
-        # Step 1: Route the query
-        route_result = route_with_complexity_analysis(query)
-        route = route_result["route"]
-        complexity = route_result["complexity"]
+        # Step 1: Analyze query (route + complexity)
+        analysis = route_with_complexity_analysis(query)
+        route = analysis["route"]
+        complexity = analysis["complexity"]
 
-        if verbose:
-            print(f"\n🔍 Query: {query[:80]}...")
-            print(f"\n🎯 Route Analysis:")
-            print(f"   Route: {route['route_name']}")
-            print(f"   Requires Retrieval: {route['requires_retrieval']}")
-            print(f"   Method: {route.get('retrieval_method', 'N/A')}")
-            print(f"   Tool: {route.get('tool', 'N/A')}")
-            print(f"   Complexity: {complexity['complexity']} ({complexity['score']}/5)")
-            print(f"   Use Reranking: {route.get('use_reranking', False)}\n")
-
-        # Step 2: Early exit if no retrieval needed
-        if not route.get("requires_retrieval", True):
-            if verbose:
-                print("⏭️  No retrieval needed (greeting/casual)\n")
+        # Step 2: Early exit for greetings
+        if not route["requires_retrieval"]:
             return []
 
-        # Step 3: Get retrieval method
-        method = route.get("retrieval_method", "dense_search")
+        # Step 3: Get final method and complexity-based k
+        method = analysis["final_retrieval_method"]
+        k = 5 if complexity["complexity"] == "simple" else 8
 
-        # Step 4: Execute retrieval based on method
-        if method == "hybrid_search":
-            # Hybrid search (BM25 + Dense)
-            if verbose:
-                print("🔄 Using hybrid search (BM25 + Dense)")
-
-            hybrid = self._get_hybrid_retriever()
-            k = 5 if complexity["complexity"] == "simple" else 8
-            results = hybrid.search(query, k=k)
-
-        elif method == "multi_query" and MULTI_QUERY_AVAILABLE:
-            # Multi-query retrieval
-            if verbose:
-                print("🔄 Using multi-query retrieval")
-
-            # Generate query variants
+        # Step 4: Execute retrieval
+        if method == "multi_query":
+            # Multi-query: Generate variants + RRF
             variants = expand_query(query, num_variants=3)
 
-            if verbose:
-                print(f"   Generated {len(variants)} query variants")
-
-            # Retrieve with each variant
             all_results = []
             for variant in variants:
-                results_variant = self.vector_store.similarity_search(variant, k=10)
-                all_results.append(results_variant)
+                results = self.hybrid_retriever._dense_search(variant, k=15)
+                all_results.append(results)
 
-            # Merge with RRF
-            k = 5 if complexity["complexity"] == "simple" else 8
-            results = reciprocal_rank_fusion(all_results, k=60)[:k]
+            # RRF fusion
+            fused_scores = {}
+            doc_map = {}
+            for results in all_results:
+                for rank, doc in enumerate(results):
+                    doc_id = hash(doc.page_content)
+                    if doc_id not in fused_scores:
+                        fused_scores[doc_id] = 0
+                        doc_map[doc_id] = doc
+                    fused_scores[doc_id] += 1 / (60 + rank)
 
-        elif method == "multi_query" and not MULTI_QUERY_AVAILABLE:
-            # Fallback to hybrid if multi-query not available
-            if verbose:
-                print("⚠️  Multi-query not available, using hybrid search")
-
-            hybrid = self._get_hybrid_retriever()
-            k = 5 if complexity["complexity"] == "simple" else 8
-            results = hybrid.search(query, k=k)
+            ranked_ids = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
+            return [doc_map[doc_id] for doc_id, _ in ranked_ids[:k]]
 
         else:
-            # Default: Dense search
-            if verbose:
-                print("🔄 Using dense search")
-
-            k = 3 if complexity["complexity"] == "simple" else 5
-            results = self.vector_store.similarity_search(query, k=k)
-
-        if verbose:
-            print(f"✅ Retrieved {len(results)} documents\n")
-
-        return results
+            # Default: Hybrid search (BM25 + Dense)
+            return self.hybrid_retriever.search(query, k=k)
 
     def get_route_info(self, query: str) -> Dict[str, Any]:
         """
-        Get routing information without retrieval.
-
-        Useful for understanding how a query would be routed!
+        Get routing information without executing retrieval.
 
         Args:
             query: Search query
 
         Returns:
-            Route and complexity information
-
-        Example:
-            info = route_retriever.get_route_info("What is BERT?")
-            print(f"Route: {info['route']['route_name']}")
-            print(f"Method: {info['route']['retrieval_method']}")
+            Route and complexity analysis
         """
         return route_with_complexity_analysis(query)
 
     def compare_routes(self, queries: List[str]) -> Dict[str, Dict]:
         """
-        Compare how different queries are routed.
+        Show how different queries are routed.
 
         Args:
-            queries: List of queries to compare
+            queries: List of queries to analyze
 
         Returns:
-            Dictionary mapping queries to their routing info
-
-        Example:
-            queries = [
-                "What is BERT?",
-                "Compare BERT and GPT-3",
-                "Hello!"
-            ]
-            comparison = route_retriever.compare_routes(queries)
+            Dictionary with routing info for each query
         """
         comparison = {}
         for query in queries:
-            route_info = self.get_route_info(query)
+            analysis = self.get_route_info(query)
             comparison[query] = {
-                "route": route_info["route"]["route_name"],
-                "method": route_info["route"].get("retrieval_method", "none"),
-                "complexity": route_info["complexity"]["complexity"],
-                "requires_retrieval": route_info["route"].get("requires_retrieval", True)
+                "route": analysis["route"]["route_name"],
+                "method": analysis["final_retrieval_method"],
+                "complexity": analysis["complexity"]["complexity"],
+                "requires_retrieval": analysis["route"]["requires_retrieval"]
             }
         return comparison
 
     def close(self):
-        """Close Qdrant client connection."""
-        self.qdrant_client.close()
-        if self._hybrid_retriever:
-            self._hybrid_retriever.close()
+        """Close Qdrant connections."""
+        self.hybrid_retriever.close()
 
 
-# Simple helper function
-def route_search(
-    query: str,
-    strategy: ChunkingStrategy = ChunkingStrategy.RECURSIVE_CHARACTER,
-    verbose: bool = False
-) -> List[Document]:
-    """
-    Quick route-driven search - no class initialization needed.
-
-    Args:
-        query: Search query
-        strategy: Chunking strategy
-        verbose: Print routing details
-
-    Returns:
-        Retrieved documents
-
-    Example:
-        from mid_retrieval.route_driven_retrieval import route_search
-
-        results = route_search("What is BERT?", verbose=True)
-    """
-    retriever = RouteRetriever(strategy=strategy)
-    results = retriever.search(query, verbose=verbose)
-    retriever.close()
-    return results
-
-
-# Example usage
 if __name__ == "__main__":
-    # Initialize
-    route_retriever = RouteRetriever(
-        strategy=ChunkingStrategy.RECURSIVE_CHARACTER
-    )
+    """
+    Run: python -m retrieval_playground.src.mid_retrieval.route_driven_retrieval
+    """
 
-    # Test different query types
+    retriever = RouteRetriever(collection_name="hybrid", use_cloud=True)
+
+    # Test queries (one for each route type)
     test_queries = [
-        "Hello!",  # Greeting
-        "What is BERT?",  # Factual
-        "Compare BERT and GPT-3",  # Comparison
-        "How does attention mechanism work?",  # Analytical
-        "Define transformer architecture",  # Definition
+        ("Hi there! How are you?", "greetings"),
+        ("What is Agent Laboratory?", "factual"),
+        ("Analyze the impact of reinforcement learning in scientific research", "analytical"),
+        ("Compare PyTorch and JAX for scientific computing", "comparison"),
     ]
 
-    print("\n" + "="*60)
-    print("ROUTE-DRIVEN RETRIEVAL DEMO")
-    print("="*60)
-
-    for query in test_queries:
-        print(f"\n{'='*60}")
-        results = route_retriever.search(query, verbose=True)
-        print(f"Final: {len(results)} documents retrieved")
+    print("\n" + "=" * 80)
+    print("ROUTE-DRIVEN RETRIEVAL - 4 Route Examples")
+    print("=" * 80)
 
     # Show routing comparison
-    print("\n" + "="*60)
-    print("ROUTING COMPARISON")
-    print("="*60)
+    queries_only = [q for q, _ in test_queries]
+    comparison = retriever.compare_routes(queries_only)
 
-    comparison = route_retriever.compare_routes(test_queries)
-    for query, info in comparison.items():
-        print(f"\nQuery: {query[:50]}...")
-        print(f"  Route: {info['route']}")
-        print(f"  Method: {info['method']}")
-        print(f"  Complexity: {info['complexity']}")
-        print(f"  Retrieval: {info['requires_retrieval']}")
+    for (query, expected_route) in test_queries:
+        info = comparison[query]
 
-    route_retriever.close()
+        print(f"\n{'=' * 80}")
+        print(f"Query: {query}")
+        print(f"Expected Route: {expected_route} | Detected: {info['route']}")
+        print(f"Method: {info['method']} | Complexity: {info['complexity']}")
+        print(f"{'=' * 80}")
+
+        if not info['requires_retrieval']:
+            print("Result: No retrieval needed (greeting)")
+            print()
+            continue
+
+        # Execute retrieval
+        results = retriever.search(query)
+        print(f"\nRetrieved: {len(results)} documents\n")
+
+        # Show top 2 results
+        for i, doc in enumerate(results[:2], 1):
+            print(f"{i}. {doc.page_content[:120]}...\n")
+
+    print("=" * 80 + "\n")
+    retriever.close()

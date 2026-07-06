@@ -7,6 +7,7 @@ BEST FOR: Production systems, multi-document search, maximum accuracy
 """
 
 from pathlib import Path
+from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore
@@ -62,6 +63,41 @@ class ContextualChunking(BaseChunking):
         )
 
         self.logger.info("✅ Contextual Chunking initialized")
+
+    def chunk_single_pdf(self, pdf_path: str) -> List[Document]:
+        """Chunk a single PDF with LLM-generated context."""
+        pdf_file = Path(pdf_path)
+        pdf_docs = self.load_pdf(pdf_file)
+
+        # Generate file-level context
+        full_text = "\n\n".join([doc.page_content for doc in pdf_docs])
+        full_text_preview = full_text[:8000] if len(full_text) > 8000 else full_text
+
+        try:
+            file_context = self._generate_file_context(full_text_preview, pdf_file.name)
+        except Exception as e:
+            self.logger.warning(f"Context generation failed: {e}")
+            file_context = f"This chunk is from the document: {pdf_file.name}"
+
+        # Create base chunks
+        base_chunks = self.base_splitter.split_documents(pdf_docs)
+
+        # Add context to each chunk
+        contextual_chunks = []
+        for chunk in base_chunks:
+            enriched_content = f"{file_context}\n\n---\n\n{chunk.page_content}"
+
+            contextual_doc = Document(
+                page_content=enriched_content,
+                metadata={
+                    "source": pdf_file.name,
+                    "chunking_strategy": self.strategy_name
+                }
+            )
+            contextual_chunks.append(contextual_doc)
+
+        self.add_chunk_ids(contextual_chunks)
+        return contextual_chunks
 
     def chunk_documents(
         self,
@@ -128,9 +164,7 @@ class ContextualChunking(BaseChunking):
                     page_content=enriched_content,
                     metadata={
                         "source": pdf_file.name,
-                        "chunking_strategy": self.strategy_name,
-                        "original_content": chunk.page_content,
-                        "added_context": file_context
+                        "chunking_strategy": self.strategy_name
                     }
                 )
 

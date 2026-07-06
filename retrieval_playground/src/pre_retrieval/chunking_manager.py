@@ -8,11 +8,8 @@ from enum import Enum
 from pathlib import Path
 import time
 
-from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
-from qdrant_client.http.models import VectorParams, Distance
-
 from retrieval_playground.utils.model_manager import model_manager
+from retrieval_playground.utils.collection_manager import CollectionManager
 from retrieval_playground.utils.pylogger import get_python_logger
 from retrieval_playground.utils import constants, config
 
@@ -23,11 +20,18 @@ from retrieval_playground.src.pre_retrieval.chunking.contextual_chunking import 
 
 
 class ChunkingStrategy(Enum):
-    """Available chunking strategies."""
+    """Available chunking strategies.
+
+    Order for create_all_chunks():
+    1. RECURSIVE_CHARACTER - Fastest, baseline
+    2. PARENT_CHILD - Fast, hierarchical
+    3. CONTEXTUAL - Moderate, LLM-enhanced
+    4. DOCLING - Slowest, most comprehensive (multimodal)
+    """
     RECURSIVE_CHARACTER = "recursive_character"
-    DOCLING = "docling"
     PARENT_CHILD = "parent_child"
     CONTEXTUAL = "contextual"
+    DOCLING = "docling"
 
 
 class ChunkingManager:
@@ -56,6 +60,9 @@ class ChunkingManager:
         """Initialize the Chunking Manager."""
         self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
         self.embeddings = model_manager.get_embeddings()
+
+        # Initialize collection manager
+        self.collection_manager = CollectionManager(self.embeddings)
 
         # Initialize all strategies
         self.strategies = {
@@ -88,17 +95,22 @@ class ChunkingManager:
         self.logger.info(f"🚀 Creating chunks with: {strategy.value}")
         self.logger.info(f"{'='*70}\n")
 
-        # Setup Qdrant
-        qdrant_client = self._setup_qdrant(strategy, use_cloud, overwrite)
-        if qdrant_client is None:
-            self.logger.info(f"✓ Collection already exists, skipping")
-            return
+        # Clear Docling images if needed
+        if overwrite and strategy == ChunkingStrategy.DOCLING:
+            self._clear_docling_images()
+
+        # Create collection
+        qdrant_client = self.collection_manager.create_collection(
+            collection_name=strategy.value,
+            use_cloud=use_cloud,
+            overwrite=overwrite,
+            enable_hybrid=False
+        )
 
         # Create vector store
-        vector_store = QdrantVectorStore(
-            client=qdrant_client,
+        vector_store = self.collection_manager.get_vector_store(
             collection_name=strategy.value,
-            embedding=self.embeddings,
+            use_cloud=use_cloud
         )
 
         # Get strategy instance
@@ -152,76 +164,14 @@ class ChunkingManager:
         self.logger.info(f"🎉 All {len(strategies)} strategies completed!")
         self.logger.info(f"{'='*70}\n")
 
-    def _setup_qdrant(
-        self,
-        strategy: ChunkingStrategy,
-        use_cloud: bool,
-        overwrite: bool = False
-    ) -> QdrantClient:
-        """
-        Setup Qdrant client and create collection.
+    def _clear_docling_images(self):
+        """Clear all images from the Docling images directory."""
+        import shutil
 
-        Args:
-            strategy: Chunking strategy
-            use_cloud: Use cloud or local Qdrant
-            overwrite: If True, delete existing collection first
-
-        Returns:
-            QdrantClient instance or None if collection exists and overwrite=False
-        """
-        if use_cloud:
-            # Cloud Qdrant
-            self.logger.info(f"☁️  Using cloud Qdrant")
-            qdrant_client = QdrantClient(
-                url=constants.QDRANT_URL,
-                api_key=constants.QDRANT_KEY,
-                timeout=600  # 10 minutes timeout for large uploads
-            )
-
-            # Check if collection exists
-            collections = qdrant_client.get_collections()
-            collection_exists = any(col.name == strategy.value for col in collections.collections)
-
-            if collection_exists:
-                if overwrite:
-                    self.logger.info(f"🗑️  Deleting existing collection: {strategy.value}")
-                    qdrant_client.delete_collection(strategy.value)
-                else:
-                    self.logger.info(f"➕ Adding to existing collection: {strategy.value}")
-                    return qdrant_client
-
-        else:
-            # Local Qdrant
-            self.logger.info(f"💾 Using local Qdrant")
-            qdrant_path = config.QDRANT_DIR / strategy.value
-
-            # Check if collection exists
-            collection_exists = qdrant_path.exists() and any(qdrant_path.iterdir())
-
-            if collection_exists:
-                if overwrite:
-                    self.logger.info(f"🗑️  Deleting existing collection: {strategy.value}")
-                    import shutil
-                    shutil.rmtree(qdrant_path)
-                    qdrant_client = QdrantClient(path=str(qdrant_path))
-                else:
-                    self.logger.info(f"➕ Adding to existing collection: {strategy.value}")
-                    qdrant_client = QdrantClient(path=str(qdrant_path))
-                    return qdrant_client
-            else:
-                qdrant_client = QdrantClient(path=str(qdrant_path))
-
-        # Create collection
-        self.logger.info(f"📦 Creating new collection: {strategy.value}")
-        qdrant_client.create_collection(
-            collection_name=strategy.value,
-            vectors_config=VectorParams(
-                size=len(self.embeddings.embed_query('test')),
-                distance=Distance.COSINE
-            )
-        )
-
-        return qdrant_client
+        if config.DOCLING_IMAGES_DIR.exists():
+            self.logger.info(f"🗑️  Clearing images from {config.DOCLING_IMAGES_DIR}")
+            shutil.rmtree(config.DOCLING_IMAGES_DIR)
+            config.DOCLING_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
     def get_parent_store(self, strategy: ChunkingStrategy = ChunkingStrategy.PARENT_CHILD):
         """
@@ -279,7 +229,7 @@ if __name__ == "__main__":
         if strategy_name in strategy_map:
             # Run single strategy
             manager.create_chunks(
-                pdf_directory=str(config.SAMPLE_PAPERS_DIR),
+                pdf_directory=str(config.WORKSHOP_DATA_DIR),
                 strategy=strategy_map[strategy_name],
                 use_cloud=True,
                 overwrite=overwrite
@@ -292,7 +242,7 @@ if __name__ == "__main__":
     else:
         # No strategy specified - run all strategies
         manager.create_all_chunks(
-            pdf_directory=str(config.SAMPLE_PAPERS_DIR),
+            pdf_directory=str(config.WORKSHOP_DATA_DIR),
             use_cloud=True,
             overwrite=overwrite
         )

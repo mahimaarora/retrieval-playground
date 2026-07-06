@@ -27,14 +27,26 @@ REPO_ROOT = setup_repo_paths()
 
 # Common paths within the repository
 PACKAGE_DIR = REPO_ROOT / "retrieval_playground"
-DATA_DIR = PACKAGE_DIR / "data"
+DATA_DIR = REPO_ROOT / "data"  # Data directory at repo root level
 QDRANT_DIR = DATA_DIR / "qdrant_db"
-SAMPLE_PAPERS_DIR = DATA_DIR / "sample_research_papers"
+WORKSHOP_DATA_DIR = DATA_DIR / "workshop_data"  # Workshop PDFs directory
+TEST_DATA_DIR = DATA_DIR / "test_data"  # Test queries and evaluation data
 TESTS_DIR = PACKAGE_DIR / "tests"
 UTILS_DIR = PACKAGE_DIR / "utils"
 RESULTS_DIR = DATA_DIR / "results"
 
+# Model cache directories
+MODELS_DIR = DATA_DIR / "models"
+FLASHRANK_CACHE_DIR = MODELS_DIR / "flashrank"  # FlashRank reranker models
+
+# Docling-specific paths
+DOCLING_IMAGES_DIR = DATA_DIR / "images"
+
 # Ensure data directories exist
 DATA_DIR.mkdir(exist_ok=True)
-SAMPLE_PAPERS_DIR.mkdir(exist_ok=True)
+WORKSHOP_DATA_DIR.mkdir(exist_ok=True)
+TEST_DATA_DIR.mkdir(exist_ok=True)
 RESULTS_DIR.mkdir(exist_ok=True)
+MODELS_DIR.mkdir(exist_ok=True)
+FLASHRANK_CACHE_DIR.mkdir(exist_ok=True)
+DOCLING_IMAGES_DIR.mkdir(exist_ok=True)

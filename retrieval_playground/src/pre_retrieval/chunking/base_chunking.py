@@ -50,6 +50,25 @@ class BaseChunking(ABC):
         """
         pass
 
+    @abstractmethod
+    def chunk_single_pdf(self, pdf_path: str) -> List[Document]:
+        """
+        Chunk a single PDF file without storing to vector database.
+
+        Useful for demos, testing, and notebooks.
+
+        Args:
+            pdf_path: Path to PDF file
+
+        Returns:
+            List of chunked Document objects
+
+        Example:
+            chunks = strategy.chunk_single_pdf("path/to/file.pdf")
+            print(f"Created {len(chunks)} chunks")
+        """
+        pass
+
     def load_pdf(self, pdf_file: Path) -> List[Document]:
         """
         Load a PDF file.

@@ -1,176 +1,143 @@
 """
-Hybrid Search: Combine BM25 (keyword) + Dense (semantic) retrieval
+Hybrid Search: Combine sparse (BM25) + dense (semantic) retrieval
+
+Uses Qdrant's native BM25 - just pass text, Qdrant handles the rest!
 
 Why Hybrid?
-- BM25: Great for exact keywords, acronyms, rare terms
-- Dense: Great for semantic meaning, paraphrases
+- Sparse (BM25): Exact keywords, acronyms, rare terms (TF-IDF weighted by Qdrant)
+- Dense: Semantic meaning, paraphrases
 - Combined: Best of both worlds! +15-25% improvement
 
+Prerequisites:
+    Run setup_hybrid_collection.py first to create collection
+
 Simple to use:
-    hybrid = HybridRetriever()
+    hybrid = HybridRetriever(collection_name="hybrid")
     results = hybrid.search("your query here")
 """
 
 from typing import List, Dict, Any, Optional
-from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
-from langchain_core.documents import Document
-from rank_bm25 import BM25Okapi
-import numpy as np
 
-from retrieval_playground.utils import config, constants
+from qdrant_client import QdrantClient, models
+from langchain_core.documents import Document
+
+from retrieval_playground.utils import constants
 from retrieval_playground.utils.model_manager import model_manager
-from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStrategy
 
 
 class HybridRetriever:
     """
-    Simple hybrid search combining BM25 + Dense retrieval.
+    Hybrid search using Qdrant's native BM25 + dense vectors.
 
     How it works:
-    1. BM25 finds documents with exact keyword matches
-    2. Dense finds documents with similar meaning
-    3. Reciprocal Rank Fusion (RRF) merges the results
+    1. Sparse search: Qdrant native BM25 (pass text, Qdrant handles tokenization/IDF)
+    2. Dense search: Semantic embeddings
+    3. RRF merges the results
 
     Example:
-        hybrid = HybridRetriever()
+        hybrid = HybridRetriever(collection_name="hybrid")
         results = hybrid.search("What is BERT?", k=5)
     """
 
     def __init__(
         self,
-        strategy: ChunkingStrategy = ChunkingStrategy.RECURSIVE_CHARACTER,
-        use_cloud: bool = True,
-        qdrant_client: Optional[QdrantClient] = None
+        collection_name: str = "hybrid"
     ):
         """
         Initialize hybrid retriever.
 
         Args:
-            strategy: Chunking strategy to use
-            use_cloud: Use cloud Qdrant (True) or local (False)
-            qdrant_client: Optional pre-configured Qdrant client
+            collection_name: Qdrant collection with sparse + dense vectors
+                            (use setup_hybrid_collection.py to create)
         """
-        self.strategy = strategy
+        self.collection_name = collection_name
 
         # Setup Qdrant client
-        if use_cloud:
-            self.qdrant_client = QdrantClient(
-                url=constants.QDRANT_URL,
-                api_key=constants.QDRANT_KEY
-            )
-        elif qdrant_client is None:
-            qdrant_path = config.QDRANT_DIR / strategy.value
-            self.qdrant_client = QdrantClient(path=str(qdrant_path))
-        else:
-            self.qdrant_client = qdrant_client
+        self.client = QdrantClient(
+            url=constants.QDRANT_URL,
+            api_key=constants.QDRANT_KEY
+        )
 
-        # Setup dense retriever (vector search)
+        # Setup embeddings for dense search
         self.embeddings = model_manager.get_embeddings()
-        self.vector_store = QdrantVectorStore(
-            client=self.qdrant_client,
-            collection_name=strategy.value,
-            embedding=self.embeddings
-        )
 
-        # Setup BM25 index (keyword search)
-        self._build_bm25_index()
+        print(f"✅ Hybrid retriever initialized (collection: '{collection_name}')")
 
-        print("✅ Hybrid retriever initialized (BM25 + Dense)")
-
-    def _build_bm25_index(self):
-        """Build BM25 index from all documents in vector store."""
-        print("Building BM25 index...")
-
-        # Get all documents from vector store
-        # Note: This is simple but loads everything into memory
-        # For production with millions of docs, use a persistent BM25 index
-        collection_name = self.strategy.value
-        scroll_result = self.qdrant_client.scroll(
-            collection_name=collection_name,
-            limit=10000,  # Adjust based on your dataset size
-            with_payload=True,
-            with_vectors=False
-        )
-
-        points = scroll_result[0]
-
-        # Extract documents and metadata
-        self.documents = []
-        self.doc_ids = []
-        self.doc_metadata = []
-
-        for point in points:
-            content = point.payload.get("page_content", "")
-            metadata = point.payload.get("metadata", {})
-
-            self.documents.append(content)
-            self.doc_ids.append(str(point.id))
-            self.doc_metadata.append(metadata)
-
-        # Tokenize documents for BM25
-        # Simple word-level tokenization
-        tokenized_docs = [doc.lower().split() for doc in self.documents]
-
-        # Create BM25 index
-        self.bm25 = BM25Okapi(tokenized_docs)
-
-        print(f"✅ BM25 index built with {len(self.documents)} documents")
-
-    def _bm25_search(self, query: str, k: int = 50) -> List[Document]:
+    def _sparse_search(self, query: str, k: int = 15) -> List[Document]:
         """
-        BM25 keyword search.
+        Sparse (BM25) search using Qdrant native BM25.
+
+        Just pass text - Qdrant handles tokenization and IDF!
 
         Args:
-            query: Search query
-            k: Number of results to return
+            query: Search query text
+            k: Number of results to return (default: 15)
 
         Returns:
             List of Documents with BM25 scores
         """
-        # Tokenize query
-        tokenized_query = query.lower().split()
+        # Search using Qdrant's native BM25
+        # No manual tokenization needed!
+        results = self.client.query_points(
+            collection_name=self.collection_name,
+            query=models.Document(
+                text=query,
+                model="Qdrant/bm25"
+            ),
+            using="bm25",  # Use the BM25 sparse vector
+            limit=k,
+            with_payload=True
+        )
 
-        # Get BM25 scores for all documents
-        scores = self.bm25.get_scores(tokenized_query)
+        # Convert to Documents
+        docs = []
+        for point in results.points:
+            doc = Document(
+                page_content=point.payload.get("page_content", ""),
+                metadata={
+                    **point.payload.get("metadata", {}),
+                    "score": float(point.score),
+                    "search_type": "bm25"
+                }
+            )
+            docs.append(doc)
 
-        # Get top-k indices
-        top_indices = np.argsort(scores)[::-1][:k]
+        return docs
 
-        # Create Document objects with scores
-        results = []
-        for idx in top_indices:
-            if scores[idx] > 0:  # Only include docs with positive scores
-                doc = Document(
-                    page_content=self.documents[idx],
-                    metadata={
-                        **self.doc_metadata[idx],
-                        "score": float(scores[idx]),
-                        "search_type": "bm25"
-                    }
-                )
-                results.append(doc)
-
-        return results
-
-    def _dense_search(self, query: str, k: int = 50) -> List[Document]:
+    def _dense_search(self, query: str, k: int = 15) -> List[Document]:
         """
-        Dense semantic search using embeddings.
+        Dense (semantic) search using Qdrant.
 
         Args:
             query: Search query
-            k: Number of results to return
+            k: Number of results to return (default: 15)
 
         Returns:
-            List of Documents with similarity scores
+            List of Documents with scores
         """
-        results = self.vector_store.similarity_search_with_score(query, k=k)
+        # Create dense query vector
+        dense_query = self.embeddings.embed_query(query)
 
-        # Convert to Document objects with consistent metadata
+        # Search Qdrant dense vectors
+        results = self.client.query_points(
+            collection_name=self.collection_name,
+            query=dense_query,
+            using="dense",
+            limit=k,
+            with_payload=True
+        )
+
+        # Convert to Documents
         docs = []
-        for doc, score in results:
-            doc.metadata["score"] = float(score)
-            doc.metadata["search_type"] = "dense"
+        for point in results.points:
+            doc = Document(
+                page_content=point.payload.get("page_content", ""),
+                metadata={
+                    **point.payload.get("metadata", {}),
+                    "score": float(point.score),
+                    "search_type": "dense"
+                }
+            )
             docs.append(doc)
 
         return docs
@@ -200,8 +167,7 @@ class HybridRetriever:
 
         for results in results_lists:
             for rank, doc in enumerate(results):
-                # Use content as key (simple approach)
-                # For production, use document ID
+                # Use content hash as key
                 doc_key = hash(doc.page_content)
 
                 # RRF score: 1 / (k + rank)
@@ -234,18 +200,18 @@ class HybridRetriever:
         self,
         query: str,
         k: int = 5,
-        bm25_k: int = 50,
-        dense_k: int = 50,
+        sparse_k: int = 15,
+        dense_k: int = 15,
         rrf_k: int = 60
     ) -> List[Document]:
         """
-        Hybrid search: BM25 + Dense + RRF.
+        Hybrid search: Sparse + Dense + RRF.
 
         Args:
             query: Search query
             k: Number of final results to return
-            bm25_k: Number of BM25 results to retrieve
-            dense_k: Number of dense results to retrieve
+            sparse_k: Number of sparse results to retrieve (default: 15)
+            dense_k: Number of dense results to retrieve (default: 15)
             rrf_k: RRF constant (higher = more weight on lower ranks)
 
         Returns:
@@ -257,15 +223,15 @@ class HybridRetriever:
                 print(f"Score: {doc.metadata['rrf_score']:.3f}")
                 print(f"Content: {doc.page_content[:100]}...")
         """
-        # Step 1: BM25 search (keyword matching)
-        bm25_results = self._bm25_search(query, k=bm25_k)
+        # Step 1: Sparse search (keyword matching) - in Qdrant
+        sparse_results = self._sparse_search(query, k=sparse_k)
 
-        # Step 2: Dense search (semantic similarity)
+        # Step 2: Dense search (semantic) - in Qdrant
         dense_results = self._dense_search(query, k=dense_k)
 
-        # Step 3: Reciprocal Rank Fusion
+        # Step 3: Reciprocal Rank Fusion - local merge
         merged = self._reciprocal_rank_fusion(
-            [bm25_results, dense_results],
+            [sparse_results, dense_results],
             k=rrf_k
         )
 
@@ -274,9 +240,7 @@ class HybridRetriever:
 
     def compare_methods(self, query: str, k: int = 5) -> Dict[str, List[Document]]:
         """
-        Compare BM25 vs Dense vs Hybrid side-by-side.
-
-        Useful for understanding how each method works!
+        Compare Sparse vs Dense vs Hybrid side-by-side.
 
         Args:
             query: Search query
@@ -287,41 +251,100 @@ class HybridRetriever:
 
         Example:
             results = hybrid.compare_methods("What is BERT?")
-            print("BM25 results:", len(results['bm25']))
+            print("Sparse results:", len(results['sparse']))
             print("Dense results:", len(results['dense']))
             print("Hybrid results:", len(results['hybrid']))
         """
-        # Get results from each method
-        bm25_results = self._bm25_search(query, k=k)
+        sparse_results = self._sparse_search(query, k=k)
         dense_results = self._dense_search(query, k=k)
         hybrid_results = self.search(query, k=k)
 
         return {
-            "bm25": bm25_results,
+            "sparse": sparse_results,
             "dense": dense_results,
             "hybrid": hybrid_results
         }
 
     def close(self):
         """Close Qdrant client connection."""
-        self.qdrant_client.close()
+        self.client.close()
 
 
-# Simple example usage
 if __name__ == "__main__":
-    # Initialize
-    hybrid = HybridRetriever(strategy=ChunkingStrategy.RECURSIVE_CHARACTER, use_cloud=False)
+    """
+    Run: python -m retrieval_playground.src.mid_retrieval.hybrid_search
+    """
 
-    # Search
-    query = "What is BERT?"
-    results = hybrid.search(query, k=3)
+    hybrid = HybridRetriever(collection_name="hybrid")
 
-    print(f"\n🔍 Query: {query}\n")
-    print("📊 Hybrid Search Results:\n")
+    # Example 1: Keyword Query
+    print("\n" + "=" * 80)
+    query1 = "What is AL?"
+    print(f"Query: {query1}")
+    print("=" * 80)
 
-    for i, doc in enumerate(results, 1):
-        print(f"{i}. RRF Score: {doc.metadata.get('rrf_score', 0):.3f}")
-        print(f"   Content: {doc.page_content[:100]}...")
-        print()
+    comparison1 = hybrid.compare_methods(query1, k=3)
 
+    print("\nSPARSE (BM25 keyword matching):")
+    for i, doc in enumerate(comparison1['sparse'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    print("DENSE (semantic embeddings):")
+    for i, doc in enumerate(comparison1['dense'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    print("HYBRID (RRF fusion):")
+    for i, doc in enumerate(comparison1['hybrid'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['rrf_score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    # Example 2: Semantic Query
+    print("=" * 80)
+    query2 = "How do AI systems automate scientific experiments?"
+    print(f"Query: {query2}")
+    print("=" * 80)
+
+    comparison2 = hybrid.compare_methods(query2, k=3)
+
+    print("\nSPARSE (BM25 keyword matching):")
+    for i, doc in enumerate(comparison2['sparse'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    print("DENSE (semantic embeddings):")
+    for i, doc in enumerate(comparison2['dense'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    print("HYBRID (RRF fusion):")
+    for i, doc in enumerate(comparison2['hybrid'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['rrf_score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    # Example 3: Mixed Query
+    print("=" * 80)
+    query3 = "Compare PyTorch and JAX for deep learning"
+    print(f"Query: {query3}")
+    print("=" * 80)
+
+    comparison3 = hybrid.compare_methods(query3, k=3)
+
+    print("\nSPARSE (BM25 keyword matching):")
+    for i, doc in enumerate(comparison3['sparse'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    print("DENSE (semantic embeddings):")
+    for i, doc in enumerate(comparison3['dense'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    print("HYBRID (RRF fusion):")
+    for i, doc in enumerate(comparison3['hybrid'][:3], 1):
+        print(f"  {i}. Score: {doc.metadata['rrf_score']:.3f}")
+        print(f"     {doc.page_content[:120]}...\n")
+
+    print("=" * 80 + "\n")
     hybrid.close()

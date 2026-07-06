@@ -318,107 +318,8 @@ def step_back_query(query: str) -> tuple[str, str]:
 # COMPLEXITY ANALYSIS
 # ============================================================================
 
-def classify_query_complexity(query: str) -> dict:
-    """
-    Classify query complexity to route to appropriate retrieval strategy.
-
-    Analyzes 5 signals:
-    1. Length (> 15 words)
-    2. Multi-hop indicators ("compared to", "in the context of", etc.)
-    3. Multiple questions
-    4. Comparison request
-    5. Analytical/reasoning request
-
-    Args:
-        query: Query string to classify
-
-    Returns:
-        {
-            "complexity": "simple" | "moderate" | "complex",
-            "score": int (0-5),
-            "signals": {
-                "length": bool,
-                "multi_hop": bool,
-                "multiple_questions": bool,
-                "comparison": bool,
-                "analytical": bool
-            },
-            "recommended_strategy": "standard_rag" | "multi_query" | "step_back" | "decompose"
-        }
-
-    Example:
-        >>> classify_query_complexity("What is RAG?")
-        {"complexity": "simple", "score": 0, ...}
-
-        >>> classify_query_complexity("Compare BERT and GPT architectures")
-        {"complexity": "moderate", "score": 2, ...}
-    """
-    complexity_score = 0
-    signals = {
-        "length": False,
-        "multi_hop": False,
-        "multiple_questions": False,
-        "comparison": False,
-        "analytical": False
-    }
-
-    # Signal 1: Query length
-    word_count = len(query.split())
-    if word_count > 15:
-        complexity_score += 1
-        signals["length"] = True
-
-    # Signal 2: Multi-hop indicators
-    multi_hop_markers = [
-        "compared to", "in the context of", "relationship between",
-        "how does", "what effect", "explain why"
-    ]
-    if any(marker in query.lower() for marker in multi_hop_markers):
-        complexity_score += 2
-        signals["multi_hop"] = True
-
-    # Signal 3: Multiple questions
-    if query.count("?") > 1 or (query.count(" and ") > 1 and query.count("?") >= 1):
-        complexity_score += 1
-        signals["multiple_questions"] = True
-
-    # Signal 4: Comparison request
-    comparison_markers = ["difference between", "compare", "versus", "vs", "vs.", "better than", "comparison"]
-    if any(marker in query.lower() for marker in comparison_markers):
-        complexity_score += 1
-        signals["comparison"] = True
-
-    # Signal 5: Analytical/reasoning request
-    analytical_markers = ["why", "how", "explain", "analyze", "evaluate"]
-    if any(query.lower().startswith(marker) for marker in analytical_markers):
-        complexity_score += 1
-        signals["analytical"] = True
-
-    # Determine complexity level and recommended strategy
-    if complexity_score <= 1:
-        complexity = "simple"
-        recommended_strategy = "standard_rag"
-    elif complexity_score == 2:
-        complexity = "moderate"
-        if signals["comparison"]:
-            recommended_strategy = "multi_query"
-        else:
-            recommended_strategy = "step_back"
-    else:
-        complexity = "complex"
-        if signals["multiple_questions"]:
-            recommended_strategy = "decompose"
-        elif signals["multi_hop"]:
-            recommended_strategy = "step_back"
-        else:
-            recommended_strategy = "multi_query"
-
-    return {
-        "complexity": complexity,
-        "score": complexity_score,
-        "signals": signals,
-        "recommended_strategy": recommended_strategy
-    }
+# Moved to retrieval_playground.utils.query_classifier
+from retrieval_playground.utils.query_classifier import classify_query_complexity
 
 
 # ============================================================================
@@ -553,16 +454,16 @@ def optimize_query_for_retrieval(
 
 def demo_query_rephrasing():
     """
-    Demonstrate all query rephrasing techniques with examples.
+    Demonstrate all query rephrasing techniques with workshop dataset examples.
     """
     print("=" * 80)
-    print("QUERY REPHRASING DEMO")
+    print("QUERY REPHRASING DEMO - SciPy Workshop Dataset")
     print("=" * 80)
 
     # 1. Single Query Expansion
     print("\n🔍 1. SINGLE QUERY EXPANSION")
     print("-" * 50)
-    query = "What is RAG?"
+    query = "What is AL?"
     print(f"Original: {query}")
     result = expand_query(query, num_variants=1)
     print(f"Expanded: {result[0]}")
@@ -570,7 +471,7 @@ def demo_query_rephrasing():
     # 2. Multi-Query Generation (RAG Fusion)
     print("\n🔍 2. MULTI-QUERY GENERATION (RAG Fusion)")
     print("-" * 50)
-    query = "How does transformer attention work?"
+    query = "How do quantum graph neural networks improve molecular property prediction?"
     print(f"Original: {query}")
     variants = expand_query(query, num_variants=3)
     print("Variants:")
@@ -580,7 +481,7 @@ def demo_query_rephrasing():
     # 3. Query Decomposition
     print("\n📋 3. QUERY DECOMPOSITION")
     print("-" * 50)
-    query = "What is RAG and how does it improve LLM performance?"
+    query = "What is AutoClimDS and how does it help with climate data analysis?"
     print(f"Original: {query}")
     sub_queries = decompose_query(query)
     print("Sub-queries:")
@@ -590,7 +491,7 @@ def demo_query_rephrasing():
     # 4. Step-Back Prompting
     print("\n🔙 4. STEP-BACK PROMPTING")
     print("-" * 50)
-    query = "What is the time complexity of BERT's self-attention?"
+    query = "What specific CUDA optimization techniques improve GPU performance in transformer models?"
     print(f"Specific: {query}")
     broader, _ = step_back_query(query)
     print(f"Broader: {broader}")
@@ -599,9 +500,9 @@ def demo_query_rephrasing():
     print("\n📊 5. COMPLEXITY CLASSIFICATION")
     print("-" * 50)
     queries = [
-        "What is RAG?",
-        "Compare BERT and GPT",
-        "Explain how transformers use attention and why they outperform RNNs"
+        "What is Agent Laboratory?",
+        "Compare the differences between PyTorch and JAX frameworks and explain which is better for scientific computing",
+        "Explain how quantum graph neural networks improve molecular property prediction and why they outperform classical graph neural networks"
     ]
     for query in queries:
         result = classify_query_complexity(query)
@@ -613,13 +514,25 @@ def demo_query_rephrasing():
     # 6. Full Orchestration
     print("\n🎯 6. FULL ORCHESTRATION")
     print("-" * 50)
-    query = "Compare the performance of BERT and GPT-3"
+    query = "Compare the performance differences between Pandas, Polars, and Dask dataframe libraries and explain which is best for large-scale scientific data processing"
     print(f"Query: {query}")
     result = optimize_query_for_retrieval(query)
     print(f"Strategy: {result['strategy']}")
+    print(f"Complexity: {result['complexity']['complexity']}")
+    print(f"Signals: {result['complexity']['signals']}")
     print(f"Processed Queries ({result['metadata']['num_queries']}):")
     for i, pq in enumerate(result['processed_queries'], 1):
         print(f"  {i}. {pq}")
+
+    # 7. Context-Aware Rewriting
+    print("\n📝 7. CONTEXT-AWARE REWRITING")
+    print("-" * 50)
+    previous_context = "We were discussing AI agents for scientific research and their ability to automate experiments."
+    query = "How effective are they in practice?"
+    print(f"Context: {previous_context}")
+    print(f"Original: {query}")
+    rewritten = rewrite_query(query, previous_context)
+    print(f"Rewritten: {rewritten}")
 
     print("\n" + "=" * 80)
     print("DEMO COMPLETE")
