@@ -92,7 +92,7 @@ class ChunkingManager:
                       If False, add to existing collection.
         """
         self.logger.info(f"\n{'='*70}")
-        self.logger.info(f"🚀 Creating chunks with: {strategy.value}")
+        self.logger.info(f"Creating chunks with: {strategy.value}")
         self.logger.info(f"{'='*70}\n")
 
         # Clear Docling images if needed
@@ -124,7 +124,7 @@ class ChunkingManager:
 
         # Cleanup
         elapsed_time = time.time() - start_time
-        self.logger.info(f"\n⏱️  Total time: {elapsed_time:.2f} seconds")
+        self.logger.info(f"\nTotal time: {elapsed_time:.2f} seconds")
 
         qdrant_client.close()
         del qdrant_client
@@ -150,8 +150,8 @@ class ChunkingManager:
         storage_type = "cloud" if use_cloud else "local"
 
         self.logger.info(f"\n{'='*70}")
-        self.logger.info(f"🚀 Creating chunks for ALL 4 strategies")
-        self.logger.info(f"📍 Storage: {storage_type} Qdrant")
+        self.logger.info(f"Creating chunks for ALL 4 strategies")
+        self.logger.info(f"Storage: {storage_type} Qdrant")
         self.logger.info(f"{'='*70}\n")
 
         strategies = list(ChunkingStrategy)
@@ -161,7 +161,7 @@ class ChunkingManager:
             self.create_chunks(pdf_directory, strategy, use_cloud, overwrite)
 
         self.logger.info(f"\n{'='*70}")
-        self.logger.info(f"🎉 All {len(strategies)} strategies completed!")
+        self.logger.info(f"✅ All {len(strategies)} strategies completed!")
         self.logger.info(f"{'='*70}\n")
 
     def _clear_docling_images(self):
@@ -169,7 +169,7 @@ class ChunkingManager:
         import shutil
 
         if config.DOCLING_IMAGES_DIR.exists():
-            self.logger.info(f"🗑️  Clearing images from {config.DOCLING_IMAGES_DIR}")
+            self.logger.info(f"Clearing images from {config.DOCLING_IMAGES_DIR}")
             shutil.rmtree(config.DOCLING_IMAGES_DIR)
             config.DOCLING_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 

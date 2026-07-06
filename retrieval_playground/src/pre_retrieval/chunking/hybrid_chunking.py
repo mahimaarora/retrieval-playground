@@ -173,13 +173,13 @@ class HybridChunking(BaseChunking):
                 all_chunks.append(chunk)
 
         # Step 2: Build TF-IDF vocabulary from all documents
-        self.logger.info(f"🔧 Step 2/3: Building vocabulary from {len(all_texts)} chunks...")
+        self.logger.info(f"Step 2/3: Building vocabulary from {len(all_texts)} chunks...")
         self.vectorizer.fit(all_texts)
         vocab = self.vectorizer.vocabulary_
         self.logger.info(f"  Vocabulary size: {len(vocab)} terms")
 
         # Step 3: Create dense + sparse vectors and upload
-        self.logger.info(f"☁️  Step 3/3: Creating vectors and uploading to Qdrant...")
+        self.logger.info(f"Step 3/3: Creating vectors and uploading to Qdrant...")
 
         points = []
         for i, chunk in enumerate(all_chunks):
@@ -220,7 +220,7 @@ class HybridChunking(BaseChunking):
                 points=points
             )
 
-        self.logger.info(f"🎉 Hybrid chunking complete: {len(all_chunks)} total chunks")
+        self.logger.info(f"✅ Hybrid chunking complete: {len(all_chunks)} total chunks")
         self.logger.info(f"   - Dense vectors: {len(all_chunks)} (semantic)")
         self.logger.info(f"   - Sparse vectors: {len(all_chunks)} (keywords)")
 

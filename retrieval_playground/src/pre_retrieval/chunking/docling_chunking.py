@@ -6,8 +6,9 @@ HOW: Uses Docling to extract and parse all content types from PDFs
 BEST FOR: Research papers, technical docs, complex PDFs with figures/tables
 """
 
+import shutil
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore
 from pypdf import PdfReader
@@ -50,21 +51,53 @@ class DoclingChunking(BaseChunking):
     def __init__(self):
         """Initialize Docling Multimodal Chunking."""
         super().__init__(strategy_name="docling")
+        self.parser = None  
+        self.logger.info("✅ Docling Multimodal Chunking initialized")
 
-        # Initialize multimodal parser
-        self.parser = DoclingMultimodalParser(
+    def _get_parser(self, images_dir: str) -> DoclingMultimodalParser:
+        """
+        Create parser with specified image directory.
+
+        Args:
+            images_dir: Directory where images should be saved
+
+        Returns:
+            Configured DoclingMultimodalParser instance
+        """
+        return DoclingMultimodalParser(
             images_scale=2.0,           # 144 DPI for images
             table_mode="accurate",      # Accurate table extraction
             do_cell_matching=True,      # Map table structure to PDF cells
             generate_descriptions=True, # AI descriptions for images/tables
-            images_output_dir="data/images"  # Save images here
+            images_output_dir=images_dir
         )
 
-        self.logger.info("✅ Docling Multimodal Chunking initialized")
-
     def chunk_single_pdf(self, pdf_path: str) -> List[Document]:
-        """Chunk a single PDF with multimodal extraction (text, tables, images)."""
+        """
+        Chunk a single PDF with multimodal extraction (text, tables, images).
+
+        Images are saved to a temporary directory (data/images_temp) which is
+        cleared before each run. This is ideal for notebooks and testing.
+
+        Args:
+            pdf_path: Path to PDF file
+
+        Returns:
+            List of Document objects with text, table, and image chunks
+        """
         pdf_file = Path(pdf_path)
+
+        # Use temporary directory for images (cleared on each run)
+        temp_dir = config.DOCLING_IMAGES_TEMP_DIR
+
+        # Clear and recreate temp directory
+        if temp_dir.exists():
+            shutil.rmtree(temp_dir)
+        temp_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create parser with temp directory
+        self.parser = self._get_parser(str(temp_dir))
+
         chunks_data = self.parser.parse(str(pdf_file))
 
         if not chunks_data:
@@ -122,6 +155,8 @@ class DoclingChunking(BaseChunking):
         """
         Chunk documents using Docling multimodal extraction.
 
+        Images are saved to a permanent directory (data/images) for production use.
+
         Memory Management:
         - Processes one PDF at a time
         - Pushes chunks to Qdrant immediately after each file
@@ -132,8 +167,11 @@ class DoclingChunking(BaseChunking):
             pdf_directory: Path to directory containing PDF files
             vector_store: QdrantVectorStore to store chunks
         """
-        self.logger.info("🎨 Starting Docling Multimodal Chunking")
-        self.logger.info("    📝 Extracting: Text + Tables + Images")
+        # Create parser with permanent image directory for production
+        self.parser = self._get_parser(str(config.DOCLING_IMAGES_DIR))
+
+        self.logger.info("Starting Docling Multimodal Chunking")
+        self.logger.info("    Extracting: Text + Tables + Images")
 
         total_text_chunks = 0
         total_table_chunks = 0
@@ -223,7 +261,7 @@ class DoclingChunking(BaseChunking):
         total = self.process_pdf_directory(pdf_directory, process_pdf)
 
         self.logger.info(
-            f"🎉 Docling multimodal chunking complete: {total} total chunks\n"
+            f"✅ Docling multimodal chunking complete: {total} total chunks\n"
             f"   - {total_text_chunks} text chunks\n"
             f"   - {total_table_chunks} table chunks\n"
             f"   - {total_image_chunks} image chunks"

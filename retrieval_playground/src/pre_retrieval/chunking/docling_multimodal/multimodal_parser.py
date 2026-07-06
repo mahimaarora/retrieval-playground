@@ -5,7 +5,6 @@ Adapted from: https://github.com/mahimaarora/multimodal-parser
 """
 
 import os
-import uuid
 import base64
 import logging
 from pathlib import Path
@@ -26,6 +25,7 @@ from docling_core.types.doc import DocItemLabel, TextItem, TableItem, PictureIte
 from .chunk_models import TextChunk, TableChunk, ImageChunk
 from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.utils import config
+from retrieval_playground.utils import constants
 
 logger = logging.getLogger(__name__)
 
@@ -86,8 +86,15 @@ class DoclingMultimodalParser:
                     "Authorization": f"Bearer {self.api_key}",
                     "x-goog-api-client": "docling-reader/1.0.0",
                 },
-                params={"model": "gemini-2.5-flash", "max_tokens": 1024},
-                prompt="Describe this image for retrieval purposes. Include: 1) What type of image it is 2) The main subject and content 3) Key information shown 4) What questions this image could help answer. Be concise but specific.",
+                params={"model": constants.MODEL_NAME, "max_tokens": 2048},
+                prompt="""Describe this image for search and retrieval purposes. Write a clear, complete description that includes:
+
+1. Type: State what kind of image this is (diagram, flowchart, architecture diagram, chart, graph, table, photo, screenshot, etc.)
+2. Content: Describe the main elements, components, and relationships shown
+3. Purpose: Explain what this image illustrates or demonstrates
+4. Key details: Mention any labels, text, numbers, or important visual elements
+
+Write in complete sentences. Make it detailed enough that someone could find this image by searching for its content.""",
                 timeout=90.0,
                 scale=1.0,
             )
@@ -124,6 +131,7 @@ class DoclingMultimodalParser:
 
         chunks: List[Chunk] = []
         chunk_idx = 0
+        image_counter = 1  # Counter for deterministic image naming (starts at 1)
 
         # Step 1: Extract text chunks using HybridChunker
         chunker = HybridChunker(
@@ -151,7 +159,7 @@ class DoclingMultimodalParser:
 
         # Step 2: Extract tables and images from document items
         current_heading: Optional[str] = None
-        for item, level in document.iterate_items():
+        for item, _level in document.iterate_items():
             if self._is_heading(item):
                 if isinstance(item, TextItem) and item.text:
                     current_heading = item.text
@@ -166,7 +174,9 @@ class DoclingMultimodalParser:
             if isinstance(item, TableItem):
                 chunk = self._create_table_chunk(item, document, chunk_idx, pdf_path.name, source_page, current_heading)
             elif isinstance(item, PictureItem):
-                chunk = self._create_image_chunk(item, document, chunk_idx, pdf_path.name, source_page, current_heading)
+                chunk = self._create_image_chunk(item, document, chunk_idx, pdf_path.name, source_page, current_heading, image_counter)
+                if chunk:
+                    image_counter += 1  # Increment only for successfully created images
 
             if chunk:
                 chunks.append(chunk)
@@ -209,7 +219,8 @@ class DoclingMultimodalParser:
         )
 
     def _create_image_chunk(self, item: PictureItem, document, idx: int, source_doc: str,
-                            source_page: Optional[int], parent_heading: Optional[str]) -> ImageChunk:
+                            source_page: Optional[int], parent_heading: Optional[str],
+                            image_num: int = 0) -> ImageChunk:
         """Create an ImageChunk from a PictureItem."""
         image_base64 = None
         image_format = None
@@ -231,7 +242,7 @@ class DoclingMultimodalParser:
 
         if image_base64:
             doc_name = Path(source_doc).stem
-            image_filename = f"{doc_name}_{uuid.uuid4()}.{image_format}"
+            image_filename = f"{doc_name}_image_{image_num}.{image_format}"
             image_path = self.images_output_dir / image_filename
             try:
                 with open(image_path, "wb") as f:
@@ -334,18 +345,22 @@ class DoclingMultimodalParser:
         if not self.llm:
             return fallback
 
-        prompt = f"""Generate a retrieval-optimized description for this table.
+        prompt = f"""Describe this table for search and retrieval purposes. Write a clear, complete description that includes:
 
-TABLE SCHEMA
-- Columns: {', '.join(headers)} ({len(headers)} total)
-- Rows: {len(df)}
+1. Content: What type of data or information does this table contain?
+2. Structure: What are the main columns and what do they represent?
+3. Purpose: What comparisons, metrics, or insights does this table show?
+4. Use cases: What specific questions can this table help answer?
+
+TABLE INFORMATION
+- Columns: {', '.join(headers)}
+- Row count: {len(df)}
 {f"- Caption: {caption}" if caption else ""}
 
-SAMPLE ROWS
+SAMPLE DATA (first {min(5, len(df))} rows):
 {df.head(5).to_markdown()}
 
-Write 2-3 sentences explaining what this table contains and what queries it can answer.
-Include the domain, data types, and example questions it addresses."""
+Write in complete sentences. Make it detailed enough that someone could find this table by searching for its content or purpose."""
 
         try:
             response = self.llm.invoke(prompt)

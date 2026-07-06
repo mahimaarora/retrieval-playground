@@ -40,7 +40,8 @@ MODELS_DIR = DATA_DIR / "models"
 FLASHRANK_CACHE_DIR = MODELS_DIR / "flashrank"  # FlashRank reranker models
 
 # Docling-specific paths
-DOCLING_IMAGES_DIR = DATA_DIR / "images"
+DOCLING_IMAGES_DIR = DATA_DIR / "images"  # Permanent storage for production
+DOCLING_IMAGES_TEMP_DIR = DATA_DIR / "images_temp"  # Temporary storage (auto-cleaned)
 
 # Ensure data directories exist
 DATA_DIR.mkdir(exist_ok=True)

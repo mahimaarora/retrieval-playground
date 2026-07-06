@@ -24,7 +24,7 @@ def get_python_logger(
                 "stream": "ext://sys.stdout",
             },
         },
-        "loggers": {"rp_logger": {"level": log_level, "handlers": ["console"]}},
+        "loggers": {"rp_logger": {"level": log_level, "handlers": ["console"], "propagate": False}},
         "disable_existing_loggers": False,
     }
 

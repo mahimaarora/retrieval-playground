@@ -70,7 +70,7 @@ class RecursiveChunking(BaseChunking):
             pdf_directory: Path to directory containing PDF files
             vector_store: QdrantVectorStore to store chunks
         """
-        self.logger.info("📝 Starting Recursive Character Chunking")
+        self.logger.info("Starting Recursive Character Chunking")
 
         def process_pdf(pdf_file: Path) -> int:
             # Step 1: Load PDF
@@ -99,4 +99,4 @@ class RecursiveChunking(BaseChunking):
         # Process all PDFs (one at a time for memory efficiency)
         total = self.process_pdf_directory(pdf_directory, process_pdf)
 
-        self.logger.info(f"🎉 Recursive chunking complete: {total} total chunks")
+        self.logger.info(f"✅ Recursive chunking complete: {total} total chunks")

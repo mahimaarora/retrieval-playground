@@ -77,3 +77,4 @@ ipython_config.py
 
 # Data folder contents
 data/models/*
+data/images_temp/

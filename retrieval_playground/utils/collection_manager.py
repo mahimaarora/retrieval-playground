@@ -53,7 +53,7 @@ class CollectionManager:
 
         if collection_exists:
             if overwrite:
-                self.logger.info(f"🗑️  Deleting existing collection: {collection_name}")
+                self.logger.info(f"Deleting existing collection: {collection_name}")
                 if use_cloud:
                     qdrant_client.delete_collection(collection_name)
                 else:
@@ -62,11 +62,11 @@ class CollectionManager:
                     shutil.rmtree(qdrant_path)
                     qdrant_client = self._get_qdrant_client(collection_name, use_cloud)
             else:
-                self.logger.info(f"➕ Using existing collection: {collection_name}")
+                self.logger.info(f"Using existing collection: {collection_name}")
                 return qdrant_client
 
         # Create new collection
-        self.logger.info(f"📦 Creating collection: {collection_name}")
+        self.logger.info(f"Creating collection: {collection_name}")
 
         # Get embedding dimension
         embedding_size = len(self.embeddings.embed_query('test'))
@@ -147,10 +147,10 @@ class CollectionManager:
 
         # Create/recreate target collection
         if target_exists and overwrite:
-            self.logger.info(f"🗑️  Deleting existing collection: {target_collection}")
+            self.logger.info(f"Deleting existing collection: {target_collection}")
             qdrant_client.delete_collection(target_collection)
 
-        self.logger.info(f"📦 Creating hybrid collection: {target_collection}")
+        self.logger.info(f"Creating hybrid collection: {target_collection}")
         qdrant_client.create_collection(
             collection_name=target_collection,
             vectors_config={

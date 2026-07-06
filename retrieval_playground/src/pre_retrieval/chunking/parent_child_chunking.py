@@ -118,7 +118,7 @@ class ParentChildChunking(BaseChunking):
             pdf_directory: Path to directory containing PDF files
             vector_store: QdrantVectorStore to store child chunks
         """
-        self.logger.info("🎯 Starting Parent-Child Chunking")
+        self.logger.info("Starting Parent-Child Chunking")
 
         total_parent_chunks = 0
         total_child_chunks = 0
@@ -200,7 +200,7 @@ class ParentChildChunking(BaseChunking):
         total_child_chunks = self.process_pdf_directory(pdf_directory, process_pdf)
 
         self.logger.info(
-            f"🎉 Parent-child chunking complete:\n"
+            f"✅ Parent-child chunking complete:\n"
             f"   - {total_parent_chunks} parent chunks (stored in memory)\n"
             f"   - {total_child_chunks} child chunks (pushed to Qdrant)"
         )

@@ -117,7 +117,7 @@ class ContextualChunking(BaseChunking):
             pdf_directory: Path to directory containing PDF files
             vector_store: QdrantVectorStore to store chunks
         """
-        self.logger.info("🔥 Starting Contextual Chunking (LLM-Enhanced)")
+        self.logger.info("Starting Contextual Chunking (LLM-Enhanced)")
         self.logger.info("⚠️  This will make LLM calls - expect slower processing")
 
         def process_pdf(pdf_file: Path) -> int:
@@ -133,7 +133,7 @@ class ContextualChunking(BaseChunking):
             )
 
             # Step 3: Generate ONE context summary for the entire file
-            self.logger.info(f"    🤖 Generating file-level context using LLM...")
+            self.logger.info(f"    Generating file-level context using LLM...")
 
             try:
                 file_context = self._generate_file_context(
@@ -149,7 +149,7 @@ class ContextualChunking(BaseChunking):
             base_chunks = self.base_splitter.split_documents(pdf_docs)
 
             self.logger.info(
-                f"    📝 Adding same context to all {len(base_chunks)} chunks..."
+                f"    Adding same context to all {len(base_chunks)} chunks..."
             )
 
             # Step 5: Add the SAME context to ALL chunks in this file
@@ -191,7 +191,7 @@ class ContextualChunking(BaseChunking):
         total = self.process_pdf_directory(pdf_directory, process_pdf)
 
         self.logger.info(
-            f"🎉 Contextual chunking complete: {total} total chunks "
+            f"✅ Contextual chunking complete: {total} total chunks "
             f"(with LLM-generated context)"
         )
 
