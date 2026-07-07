@@ -133,6 +133,24 @@ class AdaptiveRetriever:
 
         return docs
 
+    def get_complexity_info(self, query: str) -> Dict:
+        """
+        Get complexity analysis and configuration info for a query.
+
+        Args:
+            query: Search query
+
+        Returns:
+            Dictionary with complexity and config info
+        """
+        complexity = classify_query_complexity(query)
+        config = self._get_config(complexity)
+
+        return {
+            "complexity": complexity,
+            "config": config
+        }
+
     def compare_configs(self, query: str) -> Dict:
         """
         Compare results using all complexity configurations.

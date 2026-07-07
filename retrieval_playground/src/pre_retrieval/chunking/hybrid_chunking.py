@@ -143,7 +143,7 @@ class HybridChunking(BaseChunking):
         """
         from langchain_community.document_loaders import PyPDFLoader
 
-        self.logger.info("📝 Starting Hybrid Chunking (dense + sparse)")
+        self.logger.info("Starting Hybrid Chunking (dense + sparse)")
 
         pdf_dir = Path(pdf_directory)
         pdf_files = sorted(pdf_dir.glob("*.pdf"))
@@ -259,11 +259,11 @@ def create_hybrid_collection(
             url=constants.QDRANT_URL,
             api_key=constants.QDRANT_KEY
         )
-        print(f"☁️  Using cloud Qdrant")
+        print(f"Using cloud Qdrant")
     else:
         qdrant_path = config.QDRANT_DIR / collection_name
         client = QdrantClient(path=str(qdrant_path))
-        print(f"💾 Using local Qdrant at {qdrant_path}")
+        print(f"Using local Qdrant at {qdrant_path}")
 
     # Check if collection exists
     collections = client.get_collections()
@@ -272,7 +272,7 @@ def create_hybrid_collection(
         return client
 
     # Create collection with dense + sparse vectors
-    print(f"📦 Creating collection '{collection_name}' with dense + sparse vectors...")
+    print(f"Creating collection '{collection_name}' with dense + sparse vectors...")
 
     client.create_collection(
         collection_name=collection_name,
