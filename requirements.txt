@@ -35,4 +35,5 @@ datasets
 
 # Utilities
 pydantic
+pydantic-settings
 uvicorn

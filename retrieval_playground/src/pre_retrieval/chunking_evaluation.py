@@ -15,7 +15,7 @@ from retrieval_playground.src.baseline_rag import RAG
 from retrieval_playground.src.evaluation import RAGEvaluator
 from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStrategy
 from retrieval_playground.utils.pylogger import get_python_logger
-from retrieval_playground.utils import constants, config
+from retrieval_playground.utils import config
 
 
 class ChunkingEvaluator:
@@ -29,7 +29,7 @@ class ChunkingEvaluator:
             test_queries_file: Path to test queries JSON (defaults to workshop queries)
             use_cloud: Use cloud Qdrant (True) or local (False)
         """
-        self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
+        self.logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
         self.use_cloud = use_cloud
 
         # Load test queries

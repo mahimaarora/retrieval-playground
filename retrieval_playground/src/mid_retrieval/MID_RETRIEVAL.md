@@ -1,111 +1,205 @@
 # Mid-Retrieval Processing
 
-This module enhances retrieval quality **during** the retrieval step through advanced search techniques and result optimization.
+**What is Mid-Retrieval?** Advanced search techniques applied **during** the retrieval step to improve result quality.
 
-## 📁 Contents
+---
 
-### 🔄 **Reranking** (`reranking.py`)
-Cross-encoder based reranking for improved result precision:
-- **HuggingFace Cross-Encoder**: Advanced semantic reranking model
-- **Contextual Compression**: Intelligent document filtering
-- **Performance Evaluation**: Cosine similarity based benchmarking
-- **Flexible Configuration**: Configurable top-k and top-n parameters
+## 📁 What's Inside
 
-### 📊 **Retrieval Methods** (`2_Mid_Retrieval_Methods.ipynb`)
-Comprehensive retrieval techniques for different use cases:
-- **Basic Similarity Search**: Standard semantic search
-- **MMR (Maximal Marginal Relevance)**: Balance relevance and diversity
-- **Score Thresholding**: Quality-based filtering
-- **Adaptive/Dynamic Retrieval**: Flexible result counts
-- **Metadata Filtering**: Context-aware search
-- **Document Chunk Linking**: Multi-document retrieval
-- **LLM-Guided Filtering**: Intelligent pre-filtering
-- **Hybrid Retrieval**: Combine keyword and semantic search
+```
+mid_retrieval/
+├── hybrid_search.py              # BM25 + Dense vector search
+├── reranking.py                  # Cross-encoder reranking
+├── adaptive_retrieval.py         # Auto-tuning retrieval
+├── parent_child_retrieval.py     # Hierarchical retrieval
+├── route_driven_retrieval.py     # Semantic routing + retrieval
+└── multi_query_hybrid.py         # Multi-query with fusion
+```
+
+---
 
 ## 🚀 Quick Start
 
-### Interactive Notebook
-- `retrieval_playground/tutorial/2_Mid_Retrieval_Methods.ipynb` - Comprehensive retrieval methods tutorial
+### Interactive Notebooks
+- `tutorial/2A_Basic_Mid_Retrieval_Methods.ipynb` - Basic techniques
+- `tutorial/2B_Advanced_Mid_Retrieval_Methods.ipynb` - Advanced patterns
 
-### Usage Examples
+---
 
-#### Reranking Setup
+## 🔍 Available Techniques
+
+### 1. **Hybrid Search** (BM25 + Dense)
+Combines keyword matching with semantic search.
+
 ```python
-from reranking import Reranker
-from pre_retrieval.chunking_strategies import ChunkingStrategy
+from retrieval_playground.src.mid_retrieval.hybrid_search import HybridRetriever
+from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStrategy
 
-# Initialize reranker with cloud storage
-reranker = Reranker(
-    strategy=ChunkingStrategy.UNSTRUCTURED,
-    use_cloud=True,
-    top_k=20,  # Initial retrieval count
-    top_n=3    # Final reranked results
+retriever = HybridRetriever(
+    strategy=ChunkingStrategy.RECURSIVE_CHARACTER,
+    use_cloud=True
 )
 
-# Retrieve and rerank documents
-results = reranker.retrieve("machine learning applications")
-print(f"Retrieved {len(results)} reranked documents")
-
-# Evaluate reranking performance
-evaluation = reranker.evaluate_reranking()
-print(f"Improvement: {evaluation['improvement']:.4f}")
-```
-
-#### Advanced Retrieval Methods
-```python
-from langchain_qdrant import QdrantVectorStore
-
-# MMR retrieval for diversity
-mmr_results = vector_store.max_marginal_relevance_search(
-    query="neural networks",
+results = retriever.search(
+    query="What is BERT?",
     k=5,
-    fetch_k=20,
-    lambda_mult=0.7  # Balance relevance vs diversity
-)
-
-# Score threshold filtering
-threshold_results = vector_store.similarity_search_with_score(
-    query="deep learning",
-    k=10,
-    score_threshold=0.8  # Only high-quality matches
-)
-
-# Metadata filtering
-filtered_results = vector_store.similarity_search(
-    query="computer vision",
-    filter={"source": "research_papers", "year": 2025}
+    bm25_weight=0.5  # Balance between BM25 and dense
 )
 ```
 
-## 🎯 Key Features
+**When to use:** Queries with specific keywords + semantic meaning
 
-### Reranking Benefits
-- **Higher Precision**: Cross-encoder models provide better relevance scoring
-- **Contextual Understanding**: Deep semantic analysis of query-document pairs
-- **Configurable Parameters**: Flexible top-k and top-n settings
-- **Performance Tracking**: Built-in evaluation against baseline retrieval
+---
 
-### Retrieval Method Variety
-- **Semantic Search**: Dense vector similarity matching
-- **Hybrid Approaches**: Combine multiple retrieval strategies
-- **Quality Control**: Score-based and metadata-based filtering
-- **Diversity Optimization**: MMR for varied result sets
+### 2. **Reranking**
+Cross-encoder models reorder results for higher precision.
 
-## 🔧 Configuration Options
+```python
+from retrieval_playground.src.mid_retrieval.reranking import Reranker
 
-### Reranker Settings
-- `strategy`: Chunking strategy for vector store selection
-- `top_k`: Initial retrieval count (default: 20)
-- `top_n`: Final reranked results (default: 3)
+reranker = Reranker(
+    collection_name="recursive_character",
+    use_cloud=True,
+    reranker_model="bge"  # or "flashrank", "huggingface"
+)
 
-### Supported Models
-- **Embeddings**: Compatible with any LangChain embedding model
-- **Vector Store**: Qdrant with cosine similarity
+results = reranker.search_and_rerank(
+    query="Explain transformers",
+    initial_k=20,  # Retrieve more
+    final_k=5      # Return top 5 after reranking
+)
+```
 
-## 📈 Performance
+**When to use:** When top-k precision matters (RAG context)
 
-Mid-retrieval processing improves RAG by:
-- **Better relevance** → Cross-encoder reranking
-- **Result diversity** → MMR and filtering techniques
-- **Quality control** → Score thresholding and metadata filtering
-- **Flexible retrieval** → Multiple search strategies
+---
+
+### 3. **Adaptive Retrieval**
+Automatically adjusts parameters based on query complexity.
+
+```python
+from retrieval_playground.src.mid_retrieval.adaptive_retrieval import AdaptiveRetriever
+
+retriever = AdaptiveRetriever(
+    strategy=ChunkingStrategy.RECURSIVE_CHARACTER
+)
+
+# Auto-configures k, search method, reranking
+results = retriever.search("Compare BERT and GPT")
+```
+
+**When to use:** Production systems with varied query types
+
+---
+
+### 4. **Parent-Child Retrieval**
+Search child chunks, return parent context.
+
+```python
+from retrieval_playground.src.mid_retrieval.parent_child_retrieval import ParentChildRetriever
+
+retriever = ParentChildRetriever(
+    collection_name="parent_child",
+    use_cloud=True
+)
+
+results = retriever.search(
+    query="What is attention mechanism?",
+    k=3
+)
+```
+
+**When to use:** Need more context around relevant chunks
+
+---
+
+### 5. **Route-Driven Retrieval**
+Semantic routing determines retrieval strategy.
+
+```python
+from retrieval_playground.src.mid_retrieval.route_driven_retrieval import RouteDrivenRetriever
+
+retriever = RouteDrivenRetriever(
+    strategy=ChunkingStrategy.RECURSIVE_CHARACTER
+)
+
+# Automatically routes to best method
+results = retriever.search("Compare PyTorch vs JAX")
+```
+
+**When to use:** Diverse query types needing different strategies
+
+---
+
+## 💡 Typical Workflow
+
+```python
+from retrieval_playground.utils import config
+from retrieval_playground.src.mid_retrieval.hybrid_search import HybridRetriever
+from retrieval_playground.src.mid_retrieval.reranking import Reranker
+
+# 1. Hybrid Search (broad recall)
+hybrid = HybridRetriever(use_cloud=True)
+candidates = hybrid.search("What is RAG?", k=20)
+
+# 2. Rerank (high precision)
+reranker = Reranker(use_cloud=True)
+final_results = reranker.rerank(
+    query="What is RAG?",
+    documents=candidates,
+    top_k=5
+)
+
+# 3. Use in RAG pipeline
+for doc in final_results:
+    print(doc.page_content)
+```
+
+---
+
+## 📊 Performance Comparison
+
+| Method | Recall | Precision | Latency | Use Case |
+|--------|--------|-----------|---------|----------|
+| **Dense** | Medium | Medium | Fast | General queries |
+| **BM25** | Low-Med | Low-Med | Fastest | Keyword queries |
+| **Hybrid** | High | Medium | Fast | Most queries |
+| **+ Rerank** | High | High | Moderate | Production RAG |
+| **Adaptive** | High | High | Moderate | Auto-optimization |
+
+---
+
+## 🔧 Configuration
+
+All methods use settings from `utils/config.py`:
+
+```python
+from retrieval_playground.utils import config
+
+# Model configuration
+config.MODEL_NAME
+config.EMBEDDING_MODEL_NAME
+config.RERANKER_MODEL
+
+# Qdrant connection
+config.QDRANT_URL
+config.QDRANT_KEY
+```
+
+---
+
+## 📖 Learn More
+
+**Tutorials:**
+- `tutorial/2A_Basic_Mid_Retrieval_Methods.ipynb` - Hands-on guide
+- `tutorial/2B_Advanced_Mid_Retrieval_Methods.ipynb` - Advanced patterns
+
+**Key Files:**
+- `hybrid_search.py` - BM25 + Dense search
+- `reranking.py` - Cross-encoder reranking
+- `adaptive_retrieval.py` - Auto-tuning
+- `route_driven_retrieval.py` - Semantic routing
+
+---
+
+**Ready to start?** Check the notebooks in `tutorial/` for interactive examples! 🚀

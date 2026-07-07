@@ -11,7 +11,7 @@ import time
 from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.utils.collection_manager import CollectionManager
 from retrieval_playground.utils.pylogger import get_python_logger
-from retrieval_playground.utils import constants, config
+from retrieval_playground.utils import config
 
 from retrieval_playground.src.pre_retrieval.chunking.recursive_chunking import RecursiveChunking
 from retrieval_playground.src.pre_retrieval.chunking.docling_chunking import DoclingChunking
@@ -58,7 +58,7 @@ class ChunkingManager:
 
     def __init__(self):
         """Initialize the Chunking Manager."""
-        self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
+        self.logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
         self.embeddings = model_manager.get_embeddings()
 
         # Initialize collection manager

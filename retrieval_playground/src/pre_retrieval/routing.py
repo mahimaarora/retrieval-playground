@@ -11,7 +11,7 @@ Features:
 
 from semantic_router import Route
 from semantic_router.routers import SemanticRouter
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 from retrieval_playground.utils.model_manager import model_manager
 
 # ============================================================================
@@ -406,7 +406,7 @@ def get_route_info():
     route_info = {
         "total_routes": len(routes),
         "routes": {},
-        "embedding_model": f"{constants.EMBEDDING_MODEL_NAME} (via model_manager)",
+        "embedding_model": f"{config.EMBEDDING_MODEL_NAME} (via model_manager)",
         "default_threshold": ROUTE_SIMILARITY_THRESHOLD
     }
 

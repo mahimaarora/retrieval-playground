@@ -15,7 +15,7 @@ from ragas.metrics import (
 )
 import numpy as np
 from retrieval_playground.utils.pylogger import get_python_logger
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 from retrieval_playground.utils.model_manager import model_manager
 from ragas import RunConfig
 from ragas.exceptions import RagasOutputParserException
@@ -34,7 +34,7 @@ class RAGEvaluator:
             metrics: List of metric names to compute. If None, computes all metrics.
                     Available: ['answer_relevancy', 'faithfulness', 'context_precision', 'context_recall']
         """
-        self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
+        self.logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
         self.llm = model_manager.get_llm()
         
         # Define available metrics

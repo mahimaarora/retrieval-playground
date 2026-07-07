@@ -8,7 +8,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.utils.pylogger import get_python_logger
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 import psutil
@@ -25,7 +25,7 @@ class RAG:
         """
         Initialize the BaselineRAG pipeline.
         """
-        self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
+        self.logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
 
         # Initialize LLM
         self.llm = model_manager.get_llm()
@@ -34,7 +34,7 @@ class RAG:
         self.strategy = strategy
         if use_cloud:
             self.qdrant_path = None
-            self.qdrant_client = QdrantClient(url=constants.QDRANT_URL, api_key=constants.QDRANT_KEY)
+            self.qdrant_client = QdrantClient(url=config.QDRANT_URL, api_key=config.QDRANT_KEY)
         else:   
             self.qdrant_path = config.QDRANT_DIR / self.strategy.value
             self.qdrant_client = QdrantClient(path=str(self.qdrant_path))

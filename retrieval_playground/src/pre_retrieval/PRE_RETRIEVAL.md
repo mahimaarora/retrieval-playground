@@ -27,16 +27,10 @@ pre_retrieval/
 
 ## 🚀 Quick Start
 
-### Run Demos (See Everything in Action)
+### Run Chunking
 
 ```bash
-# 1. Test query rephrasing techniques
-python -m retrieval_playground.src.pre_retrieval.query_rephrasing
-
-# 2. Test semantic routing
-python -m retrieval_playground.src.pre_retrieval.routing
-
-# 3. Run chunking on workshop data
+# Run chunking on workshop data
 python -m retrieval_playground.src.pre_retrieval.chunking_manager
 ```
 
@@ -114,26 +108,6 @@ manager.create_all_chunks(
 6. **Complexity Classification** - Auto-detect query complexity
 7. **Auto-Orchestration** - Let the system pick the best technique
 
-### How to Run
-
-```bash
-# See all techniques in action
-python -m retrieval_playground.src.pre_retrieval.query_rephrasing
-```
-
-**Example output:**
-```
-🔍 1. SINGLE QUERY EXPANSION
-Original: What is AL?
-Expanded: What does the abbreviation AL stand for?
-
-🔍 2. MULTI-QUERY GENERATION
-Original: How do quantum GNNs work?
-Variants:
-  1. What are the advantages of quantum GNNs?
-  2. Impact of quantum graph networks
-  3. Performance boost from quantum GNNs
-```
 
 ### Use in Code
 
@@ -197,26 +171,6 @@ broader, specific = step_back_query("What CUDA optimizations improve GPUs?")
 | **analytical** | "explain why", "how to" | Dense search | ✅ |
 | **comparison** | "compare X vs Y" | Multi-query | ✅ |
 
-### How to Run
-
-```bash
-# See routing in action
-python -m retrieval_playground.src.pre_retrieval.routing
-```
-
-**Example output:**
-```
-Query: What is Agent Laboratory?
-Detected Route: factual ✓
-Confidence: 0.747
-Retrieval Method: hybrid_search
-
-Query: Compare PyTorch vs JAX
-Detected Route: comparison ✓
-Confidence: 0.783
-Retrieval Method: multi_query
-Reranking: True
-```
 
 ### Use in Code
 
@@ -331,8 +285,7 @@ A: Yes! Edit `routing.py` to add/remove routes or adjust utterances.
 
 **Configuration:**
 - `utils/model_manager.py` - LLM and embedding models
-- `utils/config.py` - Settings and paths
-- `utils/constants.py` - Default values
+- `utils/config.py` - All settings, paths, and configuration
 
 ---
 
@@ -343,15 +296,6 @@ A: Yes! Edit `routing.py` to add/remove routes or adjust utterances.
 # Chunking
 python -m retrieval_playground.src.pre_retrieval.chunking_manager
 python -m retrieval_playground.src.pre_retrieval.chunking_manager recursive --overwrite
-
-# Query rephrasing
-python -m retrieval_playground.src.pre_retrieval.query_rephrasing
-
-# Routing
-python -m retrieval_playground.src.pre_retrieval.routing
-
-# Evaluation
-python -m retrieval_playground.src.pre_retrieval.chunking_evaluation
 ```
 
 ### Imports
@@ -374,4 +318,4 @@ from retrieval_playground.src.pre_retrieval.routing import (
 
 ---
 
-**Ready to start?** Run `python -m retrieval_playground.src.pre_retrieval.query_rephrasing` to see query techniques in action! 🚀
+**Ready to start?** Check the notebooks in `tutorial/` for interactive examples! 🚀

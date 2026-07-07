@@ -51,8 +51,8 @@ class ParentChildRetriever:
         # Setup Qdrant client
         if use_cloud:
             self.qdrant_client = QdrantClient(
-                url=constants.QDRANT_URL,
-                api_key=constants.QDRANT_KEY
+                url=config.QDRANT_URL,
+                api_key=config.QDRANT_KEY
             )
         else:
             qdrant_path = config.QDRANT_DIR / self.collection_name

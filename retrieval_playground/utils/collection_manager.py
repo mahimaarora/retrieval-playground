@@ -11,7 +11,7 @@ from pathlib import Path
 from qdrant_client import QdrantClient, models
 from langchain_qdrant import QdrantVectorStore
 
-from retrieval_playground.utils import constants, config
+from retrieval_playground.utils import config
 from retrieval_playground.utils.pylogger import get_python_logger
 
 
@@ -24,7 +24,7 @@ class CollectionManager:
             embeddings: Embedding model instance (from model_manager)
         """
         self.embeddings = embeddings
-        self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
+        self.logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
 
     def create_collection(
         self,
@@ -257,12 +257,12 @@ class CollectionManager:
         """Get Qdrant client (cloud or local)."""
         if use_cloud:
             return QdrantClient(
-                url=constants.QDRANT_URL,
-                api_key=constants.QDRANT_KEY,
+                url=config.QDRANT_URL,
+                api_key=config.QDRANT_KEY,
                 timeout=600
             )
         else:
-            qdrant_path = config.QDRANT_DIR / collection_name
+            qdrant_path = config.ensure_dir(config.QDRANT_DIR / collection_name)
             return QdrantClient(path=str(qdrant_path))
 
     def _collection_exists(

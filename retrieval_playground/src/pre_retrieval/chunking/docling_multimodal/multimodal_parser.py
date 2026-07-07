@@ -25,7 +25,7 @@ from docling_core.types.doc import DocItemLabel, TextItem, TableItem, PictureIte
 from .chunk_models import TextChunk, TableChunk, ImageChunk
 from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.utils import config
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class DoclingMultimodalParser:
                     "Authorization": f"Bearer {self.api_key}",
                     "x-goog-api-client": "docling-reader/1.0.0",
                 },
-                params={"model": constants.MODEL_NAME, "max_tokens": 2048},
+                params={"model": config.MODEL_NAME, "max_tokens": 2048},
                 prompt="""Describe this image for search and retrieval purposes. Write a clear, complete description that includes:
 
 1. Type: State what kind of image this is (diagram, flowchart, architecture diagram, chart, graph, table, photo, screenshot, etc.)

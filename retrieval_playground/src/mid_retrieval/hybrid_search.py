@@ -21,7 +21,7 @@ from typing import List, Dict, Any, Optional
 from qdrant_client import QdrantClient, models
 from langchain_core.documents import Document
 
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 from retrieval_playground.utils.model_manager import model_manager
 
 
@@ -54,8 +54,8 @@ class HybridRetriever:
 
         # Setup Qdrant client
         self.client = QdrantClient(
-            url=constants.QDRANT_URL,
-            api_key=constants.QDRANT_KEY
+            url=config.QDRANT_URL,
+            api_key=config.QDRANT_KEY
         )
 
         # Setup embeddings for dense search

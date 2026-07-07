@@ -42,12 +42,12 @@ class Reranker:
             top_n: Final results after reranking (default: 3)
             use_cloud: Use cloud Qdrant vs local
         """
-        self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
+        self.logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
 
-        if collection_name not in constants.SUPPORTED_COLLECTIONS:
+        if collection_name not in config.SUPPORTED_COLLECTIONS:
             raise ValueError(
                 f"Collection '{collection_name}' not supported. "
-                f"Must be one of: {constants.SUPPORTED_COLLECTIONS}"
+                f"Must be one of: {config.SUPPORTED_COLLECTIONS}"
             )
 
         self.collection_name = collection_name
@@ -56,8 +56,8 @@ class Reranker:
 
         if use_cloud:
             self.qdrant_client = QdrantClient(
-                url=constants.QDRANT_URL,
-                api_key=constants.QDRANT_KEY,
+                url=config.QDRANT_URL,
+                api_key=config.QDRANT_KEY,
                 timeout=600
             )
         else:

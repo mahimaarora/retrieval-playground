@@ -6,7 +6,7 @@ from typing import Tuple
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from retrieval_playground.utils.pylogger import get_python_logger
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 from semantic_router.encoders import DenseEncoder
 from flashrank import Ranker
 import numpy as np
@@ -29,7 +29,7 @@ class ModelManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._logger = get_python_logger(
-                log_level=constants.PYTHON_LOG_LEVEL
+                log_level=config.PYTHON_LOG_LEVEL
             )
         return cls._instance
 
@@ -66,7 +66,7 @@ class ModelManager:
 
             # Initialize LLM
             self._llm = ChatGoogleGenerativeAI(
-                model=constants.MODEL_NAME,
+                model=config.MODEL_NAME,
                 temperature=0.1,
                 max_tokens=None,
                 timeout=None,
@@ -75,7 +75,7 @@ class ModelManager:
 
             # Initialize embeddings
             self._embeddings = GoogleGenerativeAIEmbeddings(
-                model=constants.EMBEDDING_MODEL_NAME
+                model=config.EMBEDDING_MODEL_NAME
             )
 
             self._logger.info(
@@ -115,7 +115,7 @@ class ModelManager:
 
         # Create encoder
         self._routing_encoder = GeminiEncoder(
-            name=constants.EMBEDDING_MODEL_NAME,
+            name=config.EMBEDDING_MODEL_NAME,
             score_threshold=score_threshold
         )
         return self._routing_encoder
@@ -137,19 +137,17 @@ class ModelManager:
             FlashRank Ranker instance
         """
         if self._reranker is None:
-            from retrieval_playground.utils import config
-
             # Ensure cache directory exists
-            config.FLASHRANK_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            cache_dir = config.ensure_dir(config.FLASHRANK_CACHE_DIR)
 
             # Initialize with persistent cache
             self._reranker = Ranker(
-                model_name=constants.RERANKER_MODEL,
-                cache_dir=str(config.FLASHRANK_CACHE_DIR)
+                model_name=config.RERANKER_MODEL,
+                cache_dir=str(cache_dir)
             )
             self._logger.info(
-                f"✅ Reranker initialized: FlashRank ({constants.RERANKER_MODEL})"
-                f" [cache: {config.FLASHRANK_CACHE_DIR}]"
+                f"✅ Reranker initialized: FlashRank ({config.RERANKER_MODEL})"
+                f" [cache: {cache_dir}]"
             )
 
         return self._reranker

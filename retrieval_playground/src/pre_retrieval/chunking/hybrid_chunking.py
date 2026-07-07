@@ -26,7 +26,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 
 from retrieval_playground.utils.pylogger import get_python_logger
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 from retrieval_playground.src.pre_retrieval.chunking.base_chunking import BaseChunking
 
 
@@ -256,8 +256,8 @@ def create_hybrid_collection(
     # Setup client
     if use_cloud:
         client = QdrantClient(
-            url=constants.QDRANT_URL,
-            api_key=constants.QDRANT_KEY
+            url=config.QDRANT_URL,
+            api_key=config.QDRANT_KEY
         )
         print(f"Using cloud Qdrant")
     else:

@@ -12,7 +12,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_qdrant import QdrantVectorStore
 
 from retrieval_playground.utils.pylogger import get_python_logger
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 
 
 class BaseChunking(ABC):
@@ -31,7 +31,7 @@ class BaseChunking(ABC):
             strategy_name: Name of the chunking strategy
         """
         self.strategy_name = strategy_name
-        self.logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
+        self.logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
 
     @abstractmethod
     def chunk_documents(
