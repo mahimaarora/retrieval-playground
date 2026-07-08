@@ -22,11 +22,6 @@ setup(
     packages=find_packages(),
     python_requires=">=3.12.7",
     install_requires=read_requirements(),
-    entry_points={
-        "console_scripts": [
-            "rp-generate-test-data=retrieval_playground.tests.test_data_generation:cli_main",
-        ],
-    },
     include_package_data=True,
     classifiers=[
         "Development Status :: 3 - Alpha",

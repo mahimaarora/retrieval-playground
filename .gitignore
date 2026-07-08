@@ -76,6 +76,5 @@ ipython_config.py
 *.log
 
 # Data folder contents
-data/*
-data/
-retrieval_playground/data/
+data/models/*
+data/images_temp/

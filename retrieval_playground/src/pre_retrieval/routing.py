@@ -1,273 +1,526 @@
-from semantic_router import Route
-from semantic_router.encoders import HuggingFaceEncoder
-from semantic_router.routers import SemanticRouter
-from retrieval_playground.utils import constants
+"""
+Routing Module
 
-# Routing configuration constants
-ROUTE_SIMILARITY_THRESHOLD = 0.7
+Routes queries to appropriate handlers using semantic similarity.
+
+Features:
+1. Semantic Routing - Route based on query intent
+2. Complexity-Based Routing - Simple vs complex query handling
+3. Tool Selection - Choose appropriate retrieval method
+"""
+
+from semantic_router import Route
+from semantic_router.routers import SemanticRouter
+from retrieval_playground.utils import config
+from retrieval_playground.utils.model_manager import model_manager
+
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
+
+ROUTE_SIMILARITY_THRESHOLD = 0.65
 ROUTE_CONFIDENCE_PRECISION = 3
+
+
+# ============================================================================
+# ROUTE DEFINITIONS
+# ============================================================================
 
 greetings_route = Route(
     name="greetings",
     utterances=[
-        "hi", "hello", "hey", "good morning", "good afternoon", "good evening",
-        "how are you", "how are you doing", "how's it going", "what's up", 
-        "how do you do", "what's new", "what's going on", "what's happening",
-        "thank you", "thanks", "thank you very much", "appreciate it",
-        "goodbye", "bye", "see you later", "see you soon", "farewell",
-        "nice to meet you", "pleasure to meet you", "good to see you",
-        "how can I help", "what can you do", "what are your capabilities"
+        # Greetings
+        "hi", "hello", "hey there", "hi there", "good morning", "good afternoon", "good evening",
+        # Status inquiries (about the assistant, not technical topics)
+        "how are you", "how are you doing", "how's it going", "what's up", "how do you do",
+        "what's new with you", "what's going on with you", "what's happening",
+        # Gratitude
+        "thank you", "thanks", "thank you very much", "appreciate it", "thanks a lot",
+        # Farewells
+        "goodbye", "bye", "see you", "see you later", "see you soon", "farewell", "take care",
+        # Pleasantries
+        "nice to meet you", "pleasure to meet you", "good to see you", "nice talking to you",
+        # Capability inquiries (meta questions about the assistant)
+        "what can you do", "what are your capabilities", "can you help me", "are you able to"
     ],
 )
 
-papers_route = Route(
-    name="research_papers",
+factual_route = Route(
+    name="factual",
     utterances=[
-        # Analytics & Causal Analysis (aligned with Analytics_2025_MC3G paper)
-        "research papers in analytics", "causal analysis", "counterfactual generation",
-        "model agnostic methods", "causally constrained models", "causal inference",
-        "analytics research", "data analytics", "predictive analytics",
-        
-        # Computer Vision & Remote Sensing (aligned with Computer_Vision_2025 paper)
-        "research papers in computer vision", "computer vision studies", "image segmentation",
-        "remote sensing images", "annotation-free segmentation", "open-vocabulary segmentation",
-        "image processing techniques", "computer vision algorithms", "visual recognition",
-        "satellite imagery analysis", "geospatial analysis",
-        
-        # Generative AI & Computational Complexity (aligned with Generative_AI_2025 paper)
-        "research papers in generative AI", "generative AI studies", "computational complexity",
-        "state space models", "satisfiability problems", "generative modeling",
-        "AI model complexity", "algorithmic complexity", "generative algorithms",
-        
-        # Machine Learning & Manifold Learning (aligned with Machine_Learning_2025 paper)
-        "research papers in machine learning", "machine learning research", "manifold learning",
-        "Riemannian geometry", "change point detection", "robust centroid estimation",
-        "statistical learning", "unsupervised learning", "geometric machine learning",
-        "manifold analysis", "topological data analysis",
-        
-        # Statistics & Publication Bias (aligned with Statistics_2025 paper)
-        "research papers in statistics", "statistical research", "publication bias",
-        "Copas-Jackson bounds", "meta-analysis", "selection bias", "statistical inference",
-        "bias correction methods", "statistical methodology", "research methodology",
-        
-        # General academic and technical queries
-        "what is machine learning", "explain deep learning", "neural networks",
-        "artificial intelligence", "AI research", "data science",
-        "academic papers", "scientific publications", "research findings",
-        "literature review", "survey paper", "technical documentation",
-        "methodology", "experimental results", "empirical studies",
-        "peer-reviewed research", "academic research", "scientific studies"
+        # Basic factual questions (what, who, when, where)
+        "what is", "what are", "what was", "what were",
+        "who is", "who are", "who was", "who created",
+        "when was", "when did", "when were",
+        "where is", "where are", "where was",
+        # Quantitative factual questions
+        "how many", "how much", "what year", "what date", "how long",
+        # Listing and identification
+        "list the", "list all", "name the", "identify the", "which is", "which are",
+        # Information requests
+        "tell me about", "give me information", "show me information about",
+        # Definition queries
+        "define", "definition of", "what does mean", "meaning of",
+        "what is the definition", "terminology of", "what is a", "what are the",
+        "explain the term", "what is meant by", "glossary term"
     ],
 )
 
+analytical_route = Route(
+    name="analytical",
+    utterances=[
+        # Reasoning and causation
+        "why does", "why do", "why is", "why are", "why would",
+        "what causes", "what caused", "what leads to", "what led to",
+        "reasoning behind", "reason for", "explain why",
+        # Analysis and evaluation
+        "analyze", "analyze the", "evaluate", "evaluate the", "assess", "assess the",
+        "examine", "investigate", "discuss", "discuss the",
+        # Impact and implications
+        "impact of", "effect of", "implications of", "consequences of",
+        "influence of", "result of", "outcome of",
+        # Explanatory requests (not definitions)
+        "explain how", "describe how", "describe the process",
+        "elaborate on", "break down", "walk through the logic",
+        # How does/do X work (complex explanatory)
+        "how does", "how do", "how did", "how does it work", "how do they work",
+        # Procedural how-to queries
+        "how to", "how do I", "how can I", "how should I",
+        "steps to", "process for", "procedure for", "method for",
+        "guide to", "tutorial on", "instructions for", "way to",
+        "approach to", "technique for", "strategy for"
+    ],
+)
 
-routes = [greetings_route, papers_route]
+comparison_route = Route(
+    name="comparison",
+    utterances=[
+        # Direct comparison
+        "compare", "compare the", "comparison of", "comparison between",
+        "versus", "vs", "X versus Y", "X vs Y",
+        # Difference queries
+        "difference between", "differences between", "what's the difference",
+        "how does X differ from Y", "how do X and Y differ",
+        # Preference and quality comparison
+        "which is better", "which is best", "better than", "worse than",
+        "superior to", "inferior to", "preferable to",
+        # Advantages and disadvantages
+        "advantages and disadvantages", "pros and cons", "advantages vs disadvantages",
+        "benefits and drawbacks", "strengths and weaknesses",
+        # Performance and benchmarking
+        "performance comparison", "benchmark comparison", "benchmark between",
+        "faster than", "slower than", "more efficient",
+        # Similarity comparison
+        "similarities and differences", "similarities between", "how are X and Y similar",
+        # Contrast
+        "contrast", "contrast between", "contrasting X and Y"
+    ],
+)
 
-rl = SemanticRouter(encoder=HuggingFaceEncoder(name=constants.DEFAULT_EMBEDDING_MODEL, score_threshold=ROUTE_SIMILARITY_THRESHOLD, trust_remote_code=True), routes=routes, auto_sync="local")
+# All routes
+routes = [
+    greetings_route,
+    factual_route,
+    analytical_route,
+    comparison_route,
+]
 
+
+# ============================================================================
+# SEMANTIC ROUTER INITIALIZATION
+# ============================================================================
+
+# Create encoder from model_manager (uses same embedding model)
+encoder = model_manager.create_routing_encoder(score_threshold=ROUTE_SIMILARITY_THRESHOLD)
+
+# Initialize semantic router
+rl = SemanticRouter(
+    encoder=encoder,
+    routes=routes,
+    auto_sync="local"
+)
+
+
+# ============================================================================
+# ROUTE METADATA
+# ============================================================================
+
+ROUTE_METADATA = {
+    "greetings": {
+        "requires_retrieval": False,
+        "retrieval_method": None,
+        "tool": "llm_direct",
+        "use_reranking": False,
+        "description": "Casual conversation and greetings"
+    },
+    "factual": {
+        "requires_retrieval": True,
+        "retrieval_method": "hybrid_search",
+        "tool": "vector_db",
+        "use_reranking": False,
+        "description": "Factual questions and definitions"
+    },
+    "analytical": {
+        "requires_retrieval": True,
+        "retrieval_method": "dense_search",
+        "tool": "vector_db",
+        "use_reranking": True,
+        "description": "Analytical, reasoning, and how-to questions"
+    },
+    "comparison": {
+        "requires_retrieval": True,
+        "retrieval_method": "multi_query",
+        "tool": "vector_db",
+        "use_reranking": True,
+        "description": "Comparison between entities or concepts"
+    },
+}
+
+
+# ============================================================================
+# ROUTING FUNCTIONS
+# ============================================================================
+
+def semantic_layer(
+    query: str,
+    similarity_threshold: float = ROUTE_SIMILARITY_THRESHOLD,
+    return_metadata: bool = False
+):
+    """
+    Apply semantic routing to determine query handling strategy.
+
+    Args:
+        query: Input query string
+        similarity_threshold: Minimum similarity score for route activation
+        return_metadata: If True, return full routing decision dict
+
+    Returns:
+        If return_metadata=False: enhanced query string (backward compatible)
+        If return_metadata=True: routing decision dict
+    """
+    try:
+        route = rl(query)
+        similarity_score = round(route.similarity_score, ROUTE_CONFIDENCE_PRECISION) if route.similarity_score else 0.0
+
+        # Get route decision
+        route_decision = _get_route_decision(route.name, similarity_score, query)
+
+        if return_metadata:
+            return route_decision
+        else:
+            # Backward compatible: return enhanced query string
+            enhanced_query = f"{query} [SYSTEM_NOTE: {route_decision['system_note']}]"
+            return enhanced_query
+
+    except Exception as e:
+        # Fallback
+        fallback_decision = {
+            "route_name": "default",
+            "confidence": 0.0,
+            "requires_retrieval": True,
+            "retrieval_method": "hybrid_search",
+            "tool": "vector_db",
+            "complexity": "moderate",
+            "use_reranking": False,
+            "system_note": f"ROUTING: Error ({str(e)}). Using default retrieval."
+        }
+
+        if return_metadata:
+            return fallback_decision
+        else:
+            return f"{query} [SYSTEM_NOTE: {fallback_decision['system_note']}]"
+
+
+def _get_route_decision(route_name: str, similarity_score: float, query: str) -> dict:
+    """
+    Get routing decision based on route name and confidence.
+
+    Args:
+        route_name: Name of the detected route
+        similarity_score: Confidence score
+        query: Original query
+
+    Returns:
+        Routing decision dictionary
+    """
+    # Get metadata for this route
+    metadata = ROUTE_METADATA.get(route_name, {
+        "requires_retrieval": True,
+        "retrieval_method": "hybrid_search",
+        "tool": "vector_db",
+        "use_reranking": False,
+        "description": "Unknown route"
+    })
+
+    decision = {
+        "route_name": route_name,
+        "confidence": similarity_score,
+        "requires_retrieval": metadata["requires_retrieval"],
+        "retrieval_method": metadata["retrieval_method"],
+        "tool": metadata["tool"],
+        "use_reranking": metadata["use_reranking"],
+        "system_note": _format_system_note(route_name, similarity_score, metadata)
+    }
+
+    return decision
+
+
+def _format_system_note(route_name: str, confidence: float, metadata: dict) -> str:
+    """
+    Format system note for backward compatibility.
+
+    Args:
+        route_name: Route name
+        confidence: Confidence score
+        metadata: Route metadata
+
+    Returns:
+        Formatted system note string
+    """
+    if not metadata["requires_retrieval"]:
+        return f"ROUTING: {route_name} (no retrieval needed) [Confidence: {confidence}]"
+    else:
+        method = metadata["retrieval_method"]
+        return f"ROUTING: {route_name} → {method} [Confidence: {confidence}]"
+
+
+def route_with_complexity_analysis(query: str) -> dict:
+    """
+    Route query considering both semantic similarity and complexity.
+
+    Combines semantic routing with complexity analysis for better decisions.
+
+    Routes determine INTENT (what kind: factual, analytical, comparison)
+    Complexity determines DIFFICULTY (how hard: simple, moderate, complex)
+
+    Args:
+        query: Input query
+
+    Returns:
+        {
+            "route": dict (from semantic_layer),
+            "complexity": dict (from classify_query_complexity),
+            "final_strategy": str,
+            "final_retrieval_method": str
+        }
+    """
+    from retrieval_playground.utils.query_classifier import classify_query_complexity
+
+    # Step 1: Semantic routing (what KIND of query?)
+    route_decision = semantic_layer(query, return_metadata=True)
+
+    # Step 2: Complexity analysis (how HARD is the query?)
+    complexity_analysis = classify_query_complexity(query)
+
+    # Step 3: Decide final method based on complexity
+    # Simple queries: use route's suggested method
+    # Moderate/Complex queries: use complexity's recommended strategy
+    if complexity_analysis["complexity"] == "simple":
+        final_retrieval_method = route_decision["retrieval_method"] or "dense_search"
+    else:
+        # Moderate or complex: trust complexity analysis
+        strategy = complexity_analysis["recommended_strategy"]
+        if strategy == "multi_query":
+            final_retrieval_method = "multi_query"
+        elif strategy == "step_back":
+            final_retrieval_method = "hybrid_search"
+        elif strategy == "decompose":
+            final_retrieval_method = "multi_query"
+        else:
+            final_retrieval_method = "dense_search"
+
+    return {
+        "route": route_decision,
+        "complexity": complexity_analysis,
+        "final_strategy": complexity_analysis["recommended_strategy"],
+        "final_retrieval_method": final_retrieval_method,
+        "metadata": {
+            "route_name": route_decision["route_name"],
+            "confidence": route_decision["confidence"],
+            "complexity_score": complexity_analysis["score"],
+            "signals": complexity_analysis["signals"]
+        }
+    }
+
+
+def select_retrieval_tool(
+    query: str,
+    route_decision: dict,
+    available_tools: list = None
+) -> str:
+    """
+    Select appropriate retrieval tool based on query and route.
+
+    Available tools:
+    - vector_db: Semantic vector search (default)
+    - bm25: Keyword/sparse search
+    - hybrid: BM25 + vector fusion
+    - sql: Structured data queries
+    - web: Web search for recent events
+
+    Args:
+        query: User query
+        route_decision: Output from route_with_complexity_analysis()
+        available_tools: List of available tools (default: all)
+
+    Returns:
+        Tool name to use
+    """
+    if available_tools is None:
+        available_tools = ["vector_db", "bm25", "hybrid", "sql", "web"]
+
+    # Check for SQL indicators
+    sql_indicators = ["count", "total", "average", "sum", "how many", "statistics"]
+    if any(indicator in query.lower() for indicator in sql_indicators):
+        if "sql" in available_tools:
+            return "sql"
+
+    # Check for recency indicators (need web search)
+    recency_indicators = ["latest", "recent", "current", "today", "2026", "now", "this year"]
+    if any(indicator in query.lower() for indicator in recency_indicators):
+        if "web" in available_tools:
+            return "web"
+
+    # Otherwise use route recommendation
+    method = route_decision.get("final_retrieval_method", "dense_search")
+
+    if method == "hybrid_search" and "hybrid" in available_tools:
+        return "hybrid"
+    elif method == "sparse_search" and "bm25" in available_tools:
+        return "bm25"
+    else:
+        return "vector_db"  # Default
+
+
+# ============================================================================
+# UTILITIES
+# ============================================================================
 
 def get_route_info():
     """
     Get information about available routes and their configurations.
-    
+
     Returns:
         Dict containing route information and statistics
     """
     route_info = {
         "total_routes": len(routes),
-        "routes": {
-            "greetings": {
-                "name": "greetings",
-                "utterances_count": len(greetings_route.utterances),
-                "description": "Handles casual conversation and greetings"
-            },
-            "research_papers": {
-                "name": "research_papers", 
-                "utterances_count": len(papers_route.utterances),
-                "description": "Routes academic and research-related queries"
-            }
-        },
-        "embedding_model": constants.DEFAULT_EMBEDDING_MODEL,
+        "routes": {},
+        "embedding_model": f"{config.EMBEDDING_MODEL_NAME} (via model_manager)",
         "default_threshold": ROUTE_SIMILARITY_THRESHOLD
     }
+
+    for route in routes:
+        route_info["routes"][route.name] = {
+            "name": route.name,
+            "utterances_count": len(route.utterances),
+            "metadata": ROUTE_METADATA.get(route.name, {})
+        }
+
     return route_info
 
-def greetings():
-    return (
-        "ROUTING: Query classified as greeting/casual conversation. "
-        "No retrieval required - proceeding directly to LLM for response generation."
-    )
 
-def research_papers():
-    return (
-        "ROUTING: Query classified as research-related. "
-        "Retrieval enabled - routing to Research Papers vector database for context extraction."
-    )
+# ============================================================================
+# DEMO
+# ============================================================================
 
-def semantic_layer(query: str, similarity_threshold: float = ROUTE_SIMILARITY_THRESHOLD):
+def demo_routing():
     """
-    Apply semantic routing to determine query handling strategy.
-    
-    Args:
-        query: Input query string
-        similarity_threshold: Minimum similarity score for route activation
-        
-    Returns:
-        Enhanced query string with system routing notes
+    Demonstrate routing functionality with workshop dataset examples.
     """
-    try:
-        route = rl(query)
-        print(f"Route for the query {query}: {route}")
-        if route.similarity_score is None:
-            system_note = (
-                f"ROUTING: Low confidence match. No route found for the query. "
-                f"Provide default response for the query."
-            )
-            enhanced_query = f"{query} [SYSTEM_NOTE: {system_note}]"
-            return enhanced_query
+    print("=" * 80)
+    print("ROUTING DEMO - SciPy Workshop Dataset")
+    print("=" * 80)
 
-        similarity_score = round(route.similarity_score, ROUTE_CONFIDENCE_PRECISION)
-            
-        if route.name == "greetings":
-            system_note = f"{greetings()} [Confidence: {similarity_score}]"
-        elif route.name == "research_papers":
-            system_note = f"{research_papers()} [Confidence: {similarity_score}]"
-        else:
-            # Fallback for unrecognized routes
-            system_note = (
-                f"ROUTING: Unrecognized route '{route.name}'. "
-                f"Provide default response for the query. [Score: {similarity_score}]"
-            )
-        
-        enhanced_query = f"{query} [SYSTEM_NOTE: {system_note}]"
-        return enhanced_query
-        
-    except Exception as e:
-        # Fallback in case of routing errors
-        fallback_note = (
-            f"ROUTING: Error in semantic routing ({str(e)}). "
-            f"Provide default response for the query."
-        )
-        return f"{query} [SYSTEM_NOTE: {fallback_note}]"
-
-
-def demonstrate_routing_examples():
-    """
-    Demonstrate routing functionality with 5 different example queries.
-    
-    Returns:
-        List of dictionaries containing example queries and their routing results
-    """
-    examples = [
-        # Example 1: Greeting/General query
-        {
-            "category": "greetings",
-            "query": "Hi there! How are you doing today?",
-            "description": "Casual greeting that should route to greetings handler"
-        },
-        
-        # Example 2: Another greeting/general query  
-        {
-            "category": "greetings",
-            "query": "Thank you for your help with this research!",
-            "description": "Gratitude expression that should route to greetings handler"
-        },
-        
-        # Example 3: Papers route - Analytics/Causal Analysis
-        {
-            "category": "research_papers",
-            "query": "What research papers discuss counterfactual generation and causal analysis methods?",
-            "description": "Analytics research query aligned with Analytics_2025_MC3G paper"
-        },
-        
-        # Example 4: Papers route - Computer Vision/Remote Sensing
-        {
-            "category": "research_papers", 
-            "query": "Can you explain annotation-free segmentation techniques for remote sensing images?",
-            "description": "Computer vision query aligned with Computer_Vision_2025 paper"
-        },
-        
-        # Example 5: Default/Low confidence query
-        {
-            "category": "default_fallback",
-            "query": "Give cheesecake recipe",
-            "description": "Unrelated query that should trigger default fallback routing"
-        }
+    # Test queries for each route type
+    test_queries = [
+        ("Hello! How are you?", "greetings"),
+        ("What are the key components of the Agent Laboratory system?", "factual"),
+        ("What is the definition of function space diffusion?", "factual"),
+        ("Explain why quantum graph neural networks work better than classical methods", "analytical"),
+        ("How can I train a transformer model on climate data?", "analytical"),
+        ("Compare PyTorch versus JAX for scientific computing", "comparison"),
     ]
-    
-    results = []
-    print("\n\n🚀 SEMANTIC ROUTING EXAMPLES DEMONSTRATION\n" + "="*60)
-    
-    for i, example in enumerate(examples, 1):
-        print(f"\n📝 EXAMPLE {i}: {example['category'].upper()}")
-        print(f"Query: \"{example['query']}\"")
-        print(f"Expected: {example['description']}")
-        
-        # Process the query through semantic routing
-        try:
-            enhanced_query = semantic_layer(example['query'])
-            route = rl(example['query'])
-            if route.similarity_score is not None:
-                similarity_score = round(route.similarity_score, ROUTE_CONFIDENCE_PRECISION)
-            else:
-                similarity_score = None
 
-            result = {
-                "example_number": i,
-                "category": example['category'],
-                "original_query": example['query'],
-                "enhanced_query": enhanced_query,
-                "detected_route": route.name if route else "None",
-                "similarity_score": similarity_score,
-                "description": example['description'],
-                "routing_successful": True
-            }
-            
-            print(f"Detected Route: {route.name}")
-            print(f"Confidence Score: {similarity_score}")
-            print(f"Query with Note: {enhanced_query}")
-            
-        except Exception as e:
-            result = {
-                "example_number": i,
-                "category": example['category'],
-                "original_query": example['query'],
-                "enhanced_query": f"{example['query']} [SYSTEM_NOTE: Error in routing]",
-                "detected_route": "error",
-                "similarity_score": 0.0,
-                "description": example['description'],
-                "routing_successful": False,
-                "error": str(e)
-            }
-            print(f"❌ Routing Error: {str(e)}")
-        
-        results.append(result)
-        print("-" * 60)
-    
-    return results
-
-
-def run_routing_examples():
-    """
-    Run and display routing examples for testing and demonstration.
-    """
-    print("🧪 Testing Semantic Routing System...")
-    print(f"Route Configuration: {len(routes)} routes available")
+    print(f"\nConfigured Routes: {len(routes)}")
     print(f"Similarity Threshold: {ROUTE_SIMILARITY_THRESHOLD}")
-    print(f"Embedding Model: {constants.DEFAULT_EMBEDDING_MODEL}")
-    
-    # Run the examples
-    results = demonstrate_routing_examples()
-    
-    # Summary statistics
-    successful_routes = sum(1 for r in results if r['routing_successful'])
-    print(f"\n📈 ROUTING SUMMARY:")
-    print(f"Total Examples: {len(results)}")
-    print(f"Successful Routes: {successful_routes}")
-    print(f"Success Rate: {(successful_routes/len(results)*100):.1f}%")
-    
-    return results
+    print()
+
+    for query, expected_route in test_queries:
+        print(f"\nQuery: {query}")
+        print(f"Expected Route: {expected_route}")
+
+        # Test semantic_layer with metadata
+        result = semantic_layer(query, return_metadata=True)
+        print(f"Detected Route: {result['route_name']}")
+        print(f"Confidence: {result['confidence']}")
+        print(f"Retrieval Method: {result['retrieval_method']}")
+        print(f"Requires Retrieval: {result['requires_retrieval']}")
+        print(f"Use Reranking: {result['use_reranking']}")
+        print("-" * 80)
+
+    # Test complexity-based routing
+    print("\n" + "=" * 80)
+    print("COMPLEXITY-BASED ROUTING")
+    print("=" * 80)
+
+    complex_queries = [
+        "What is AutoClimDS?",
+        "Compare the performance of different dataframe libraries and explain which is best for large-scale scientific data",
+        "How do quantum graph neural networks leverage quantum mechanics to improve molecular property prediction compared to classical approaches?"
+    ]
+
+    for query in complex_queries:
+        print(f"\nQuery: {query}")
+        result = route_with_complexity_analysis(query)
+        print(f"Route: {result['route']['route_name']}")
+        print(f"Complexity: {result['complexity']['complexity']} (score: {result['complexity']['score']})")
+        print(f"Final Strategy: {result['final_strategy']}")
+        print(f"Final Retrieval Method: {result['final_retrieval_method']}")
+        print(f"Signals: {result['metadata']['signals']}")
+
+    # Test tool selection
+    print("\n" + "=" * 80)
+    print("TOOL SELECTION")
+    print("=" * 80)
+
+    tool_queries = [
+        "What is function space diffusion?",
+        "How many papers discuss climate data analysis?",
+        "What are the latest developments in AI agents for scientific research in 2026?",
+        "Compare the benchmark performance across different GPU architectures"
+    ]
+
+    for query in tool_queries:
+        route_decision = route_with_complexity_analysis(query)
+        tool = select_retrieval_tool(query, route_decision)
+        print(f"\nQuery: {query}")
+        print(f"Selected Tool: {tool}")
+        print(f"Route: {route_decision['route']['route_name']}")
+
+    # Test scientific paper queries
+    print("\n" + "=" * 80)
+    print("SCIENTIFIC PAPER QUERIES")
+    print("=" * 80)
+
+    scientific_queries = [
+        "What experimental results demonstrate the effectiveness of AI agents in scientific research?",
+        "Describe the architecture for climate data retrieval and analysis systems",
+        "What optimization techniques are recommended for improving LLM performance in Python?"
+    ]
+
+    for query in scientific_queries:
+        print(f"\nQuery: {query}")
+        result = route_with_complexity_analysis(query)
+        print(f"Route: {result['route']['route_name']}")
+        print(f"Complexity: {result['complexity']['complexity']}")
+        print(f"Strategy: {result['final_strategy']}")
+        print(f"Reranking: {result['route']['use_reranking']}")
+
+    print("\n" + "=" * 80)
+    print("DEMO COMPLETE")
+    print("=" * 80)
+
 
 if __name__ == "__main__":
-    run_routing_examples()
-    
+    demo_routing()

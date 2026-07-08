@@ -39,29 +39,37 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         logger.error(f"❌ Failed to extract text from {Path(pdf_path).name}: {e}")
         raise
 
-def generate_test_samples(text_content: str, model, filename: str) -> List[TestSample]:
+def generate_test_samples(text_content: str, model, filename: str, num_samples: int = 3) -> List[TestSample]:
     """Generate test samples from text content using LLM."""
     prompt = f"""
-    Based on the following research paper content, generate 1 test sample for RAG evaluation.
-    
+    Based on the following research paper content, generate {num_samples} diverse test samples for RAG evaluation.
+
     For each sample, create:
-    1. user_input: A natural question someone might ask about this content
-    2. reference_context: The passage from the text that contains the answer, along with broader surrounding context (quote directly from the paper)
-    3. reference: A clear, concise answer based on the reference_context
-    
-    Return the response as a JSON array with this exact structure (single sample):
+    1. user_input: A natural question someone might ask about this content (vary question types: factual, analytical, comparative)
+    2. reference_context: The exact passage from the text that contains the answer (quote directly from the paper, 2-4 sentences)
+    3. reference: A clear, concise answer (1-2 sentences) based on the reference_context
+
+    Generate questions covering different aspects:
+    - Main contributions/findings
+    - Methodology/approach
+    - Results/performance
+    - Comparisons with other work
+    - Limitations or future work
+
+    Return the response as a JSON array with this exact structure:
     [
         {{
             "user_input": "question here",
             "reference_context": "exact passage from text",
             "reference": "ground truth answer"
-        }}
+        }},
+        ...
     ]
-    
-    Paper content:
-    {text_content}  
-    
-    Make sure the question is meaningful and represents an important aspect of the paper.
+
+    Paper content (first 8000 chars):
+    {text_content[:8000]}
+
+    Make sure questions are meaningful, diverse, and answerable from the given context.
     """
     
     try:
@@ -126,13 +134,17 @@ def main():
     
     for pdf_path in pdf_files:
         try:
+            logger.info(f"📄 Processing {pdf_path.name}...")
+
             # Extract text from PDF
             text_content = extract_text_from_pdf(str(pdf_path))
-            
-            # Generate test samples
-            samples = generate_test_samples(text_content, model, pdf_path.name)
+
+            # Generate 3 test samples per paper
+            samples = generate_test_samples(text_content, model, pdf_path.name, num_samples=3)
             all_samples.extend(samples)
-            
+
+            logger.info(f"   ✓ Generated {len(samples)} samples from {pdf_path.name}")
+
         except Exception as e:
             logger.error(f"❌ Error processing {pdf_path.name}: {e}")
             continue

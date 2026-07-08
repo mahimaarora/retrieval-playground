@@ -5,9 +5,11 @@ from typing import Tuple
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
 from retrieval_playground.utils.pylogger import get_python_logger
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
+from semantic_router.encoders import DenseEncoder
+from flashrank import Ranker
+import numpy as np
 
 
 class ModelManager:
@@ -18,6 +20,8 @@ class ModelManager:
     _instance: Optional["ModelManager"] = None
     _llm: Optional[ChatGoogleGenerativeAI] = None
     _embeddings: Optional[GoogleGenerativeAIEmbeddings] = None
+    _routing_encoder = None
+    _reranker: Optional[Ranker] = None  # Cached reranker instance
     _logger = get_python_logger(log_level="info")
 
     def __new__(cls) -> "ModelManager":
@@ -25,7 +29,7 @@ class ModelManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._logger = get_python_logger(
-                log_level=constants.PYTHON_LOG_LEVEL
+                log_level=config.PYTHON_LOG_LEVEL
             )
         return cls._instance
 
@@ -42,12 +46,12 @@ class ModelManager:
 
         return self._llm
 
-    def get_embeddings(self) -> HuggingFaceEmbeddings:
+    def get_embeddings(self) -> GoogleGenerativeAIEmbeddings:
         """
         Get shared instances of embeddings model.
 
         Returns:
-            HuggingFaceEmbeddings:
+            GoogleGenerativeAIEmbeddings:
                 Shared embeddings model instance
         """
         if self._embeddings is None:
@@ -62,7 +66,7 @@ class ModelManager:
 
             # Initialize LLM
             self._llm = ChatGoogleGenerativeAI(
-                model=constants.MODEL_NAME,
+                model=config.MODEL_NAME,
                 temperature=0.1,
                 max_tokens=None,
                 timeout=None,
@@ -70,9 +74,8 @@ class ModelManager:
             )
 
             # Initialize embeddings
-            self._embeddings = HuggingFaceEmbeddings(
-                model_name=constants.DEFAULT_EMBEDDING_MODEL,
-                model_kwargs={"trust_remote_code": True}
+            self._embeddings = GoogleGenerativeAIEmbeddings(
+                model=config.EMBEDDING_MODEL_NAME
             )
 
             self._logger.info(
@@ -90,6 +93,64 @@ class ModelManager:
         self._embeddings = None
         self._initialize_models()
 
+    def create_routing_encoder(self, score_threshold: float = 0.7):
+        """
+        Create encoder for routing using Gemini embeddings.
+
+        Args:
+            score_threshold: Similarity threshold for routing (default: 0.7)
+
+        Returns:
+            Encoder instance
+        """
+
+        embeddings = self.get_embeddings()
+
+        # Minimal encoder: inherit from DenseEncoder and override __call__
+        class GeminiEncoder(DenseEncoder):
+            def __call__(self, docs):
+                if isinstance(docs, str):
+                    docs = [docs]
+                return np.array(embeddings.embed_documents(docs))
+
+        # Create encoder
+        self._routing_encoder = GeminiEncoder(
+            name=config.EMBEDDING_MODEL_NAME,
+            score_threshold=score_threshold
+        )
+        return self._routing_encoder
+
+    def destroy_routing_encoder(self):
+        """
+        Destroy routing encoder to free memory.
+        """
+        self._routing_encoder = None
+
+    def get_reranker(self):
+        """
+        Get FlashRank reranker model (cached singleton).
+
+        Uses persistent cache directory in project's data/models/flashrank/
+        to avoid re-downloading on every system restart.
+
+        Returns:
+            FlashRank Ranker instance
+        """
+        if self._reranker is None:
+            # Ensure cache directory exists
+            cache_dir = config.ensure_dir(config.FLASHRANK_CACHE_DIR)
+
+            # Initialize with persistent cache
+            self._reranker = Ranker(
+                model_name=config.RERANKER_MODEL,
+                cache_dir=str(cache_dir)
+            )
+            self._logger.info(
+                f"✅ Reranker initialized: FlashRank ({config.RERANKER_MODEL})"
+                f" [cache: {cache_dir}]"
+            )
+
+        return self._reranker
 
 # Global instance
 model_manager = ModelManager()

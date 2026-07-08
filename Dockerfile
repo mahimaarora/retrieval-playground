@@ -20,6 +20,23 @@ COPY . .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -e .
 
+# Pre-download Docling models from HuggingFace (avoids download during workshop)
+RUN python -c "\
+from docling.document_converter import DocumentConverter; \
+from docling.datamodel.pipeline_options import PdfPipelineOptions, TableStructureOptions, TableFormerMode; \
+from docling.datamodel.base_models import InputFormat; \
+from docling.document_converter import PdfFormatOption; \
+print('Pre-downloading Docling models...'); \
+pipeline_opts = PdfPipelineOptions( \
+    do_table_structure=True, \
+    table_structure_options=TableStructureOptions(mode=TableFormerMode.ACCURATE) \
+); \
+converter = DocumentConverter( \
+    format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_opts)} \
+); \
+print('✅ Docling models cached successfully'); \
+"
+
 # Create necessary directories
 RUN mkdir -p /workspace/retrieval_playground/data/sample_research_papers
 
