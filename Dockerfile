@@ -18,7 +18,8 @@ COPY . .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e .
+    pip install --no-cache-dir -e ".[notebook]" && \
+    pip install --no-cache-dir "langchain-community>=0.3,<0.4.2"
 
 # Pre-download Docling models from HuggingFace (avoids download during workshop)
 RUN python -c "\
@@ -68,7 +69,7 @@ echo "Copy and paste that URL into your browser."\n\
 echo ""\n\
 echo "============================================"\n\
 echo ""\n\
-jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token="" --NotebookApp.password=""\n\
+python -m jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token="" --NotebookApp.password=""\n\
 ' > /workspace/start.sh && chmod +x /workspace/start.sh
 
 # Default command
