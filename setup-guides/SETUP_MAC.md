@@ -100,13 +100,13 @@ Start with notebook: `1A_Pre_Chunking_Methods.ipynb`
 
 ```bash
 # Stop the workshop
-docker-compose down
+docker compose down
 
 # Start again
 ./start-workshop.sh
 
 # View logs if something goes wrong
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ---

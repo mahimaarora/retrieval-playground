@@ -4,7 +4,15 @@ Simple 3-step setup for the Retrieval Playground workshop.
 
 ---
 
-## Step 1: Install Docker CLI
+## Prerequisites
+
+- **20 GB+ free disk space** for Docker (the workshop image is ~11 GB)
+- Internet connection
+- API keys from your instructor (or create your own — see [setup-guides/README.md](README.md))
+
+---
+
+## Step 1: Install Docker
 
 ### Ubuntu/Debian
 
@@ -22,7 +30,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 # Set up repository
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Install Docker Engine and Docker Compose
+# Install Docker Engine and Compose plugin
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
@@ -30,40 +38,20 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plu
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# Add your user to docker group (no sudo needed)
+# Allow running Docker without sudo
 sudo usermod -aG docker $USER
-
-# Log out and log back in for changes to take effect
+newgrp docker   # apply group now (or log out and back in)
 ```
 
-### Fedora/RHEL/CentOS
+### Other Linux distros
+
+Follow the official guide: [Docker Engine install](https://docs.docker.com/engine/install/)
+
+### Verify installation
 
 ```bash
-# Install Docker Engine
-sudo dnf install -y dnf-plugins-core
-sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-
-# Start Docker service
-sudo systemctl start docker
-sudo systemctl enable docker
-
-# Add your user to docker group
-sudo usermod -aG docker $USER
-
-# Log out and log back in
-```
-
-### Verify Installation
-
-```bash
-# Check Docker version
 docker --version
-
-# Check Docker Compose version  
 docker compose version
-
-# Test Docker is running
 docker run hello-world
 ```
 
@@ -71,56 +59,38 @@ docker run hello-world
 
 ## Step 2: Get Workshop Files & Add API Keys
 
-1. **Download the repository:**
-  ```bash
-   # Clone the repository
-   git clone https://github.com/mahimaarora/retrieval-playground.git
-   cd retrieval-playground
-  ```
-2. **Create .env file with your API keys:**
-  ```bash
-   # Copy the example file
-   cp .env.example .env
+```bash
+git clone https://github.com/mahimaarora/retrieval-playground.git
+cd retrieval-playground
 
-   # Edit with your preferred editor (nano, vim, gedit, etc.)
-   nano .env
-   # or
-   vim .env
-   # or
-   gedit .env
-  ```
-3. **Add your keys** (provided by instructor):
-  ```
-   GOOGLE_API_KEY=your_key_here
-   QDRANT_URL=your_url_here
-   QDRANT_KEY=your_key_here
-  ```
-   Save and close the file.
+cp .env.example .env
+nano .env   # or vim, gedit, etc.
+```
+
+Add your keys (provided by instructor):
+
+```env
+GOOGLE_API_KEY=your_key_here
+QDRANT_URL=your_url_here
+QDRANT_KEY=your_key_here
+```
+
+> **Note:** `./start-workshop.sh` can also create `.env` from `.env.example` if you skip this step — just edit the file before the container starts.
 
 ---
 
 ## Step 3: Start the Workshop
 
-1. **Make the start script executable:**
-  ```bash
-   chmod +x start-workshop.sh
-  ```
-2. **Run the start script:**
-  ```bash
-   ./start-workshop.sh
-  ```
-3. **Wait 5-10 minutes for first-time setup**
-4. **Open your browser to:**
-  ```
-   http://localhost:8888
-  ```
-5. **Navigate to:** `retrieval_playground/tutorial/`
+```bash
+./start-workshop.sh
+```
 
----
+- **First run:** builds the image (~5–10 minutes). Say **N** to "Rebuild image?" on later runs unless you changed `Dockerfile` or `requirements.txt`.
+- **Open:** [http://localhost:8888](http://localhost:8888)
+- **Notebooks:** `retrieval_playground/tutorial/`
+- **Optional check:** run `setup-guides/verify_setup.ipynb`
 
-## ✅ You're Done!
-
-Start with notebook: `1A_Pre_Chunking_Methods.ipynb`
+Start with: `1A_Pre_Chunking_Methods.ipynb`
 
 ---
 
@@ -128,24 +98,38 @@ Start with notebook: `1A_Pre_Chunking_Methods.ipynb`
 
 ```bash
 # Stop the workshop
-docker-compose down
+docker compose down
 
-# Start again
+# Start again (no rebuild needed for notebook/code/data changes)
 ./start-workshop.sh
 
-# View logs if something goes wrong
-docker-compose logs -f
+# Or restart the running container
+docker compose restart
+
+# View logs
+docker compose logs -f
 
 # Check if container is running
 docker ps
 ```
 
+### When to rebuild vs restart
+
+| You changed… | Action |
+| --- | --- |
+| Notebooks, `src/`, `utils/`, `data/` | `docker compose up -d` or `./start-workshop.sh` (choose **N** to rebuild) |
+| `Dockerfile`, `requirements.txt` | `./start-workshop.sh` and choose **Y** to rebuild |
+
 ---
 
-## Need Help?
+## Troubleshooting
 
-- **Permission denied?** Make sure you logged out and back in after adding user to docker group
-- **Docker not starting?** Run: `sudo systemctl status docker`
-- **Port 8888 busy?** Stop other Jupyter notebooks: `pkill jupyter`
+| Issue | Solution |
+| --- | --- |
+| Permission denied on `docker` | Run `newgrp docker` or log out and back in after `usermod` |
+| `docker compose: command not found` | Install the plugin: `sudo apt-get install docker-compose-plugin` |
+| No space left on device | `docker system prune -a` then retry; ensure 20 GB+ free for Docker |
+| Port 8888 busy | `pkill jupyter` or change the port in `docker-compose.yml` |
+| `./start-workshop.sh: Permission denied` | `chmod +x start-workshop.sh` |
 
-Ask your instructor for help! 🙋
+Ask your instructor for help!

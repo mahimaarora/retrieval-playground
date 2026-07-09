@@ -100,13 +100,13 @@ Open Command Prompt or PowerShell in the folder:
 
 ```cmd
 REM Stop the workshop
-docker-compose down
+docker compose down
 
 REM Start again
 start-workshop.bat
 
 REM View logs if something goes wrong
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ---

@@ -153,8 +153,11 @@ Once verification passes:
 3. **Follow the notebooks in order:**
   - `1A_Pre_Chunking_Methods.ipynb` - Document chunking strategies
   - `1B_Pre_Query_Methods.ipynb` - Query enhancement
-  - `2_Mid_Retrieval_Methods.ipynb` - Retrieval methods
+  - `2A_Basic_Mid_Retrieval_Methods.ipynb` - Basic retrieval methods
+  - `2B_Advanced_Mid_Retrieval_Methods.ipynb` - Advanced retrieval methods
   - `3_Post_Retrieval.ipynb` - Post-processing strategies
+  - `4_Evaluation.ipynb` - Evaluation metrics
+  - `5_Agentic_RAG.ipynb` - Agentic RAG
 
 ---
 
@@ -162,17 +165,17 @@ Once verification passes:
 
 ```bash
 # Stop the workshop
-docker-compose down
+docker compose down
 
 # Start the workshop
 ./start-workshop.sh           # Mac/Linux
 start-workshop.bat            # Windows
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
-# Restart after changes
-docker-compose restart
+# Restart after notebook/code/data changes (no rebuild needed)
+docker compose restart
 ```
 
 ---
@@ -187,6 +190,8 @@ docker-compose restart
 | "Cannot connect to Qdrant" | Verify `QDRANT_URL` and `QDRANT_KEY` in `.env` |
 | Docker not starting        | Make sure Docker service is running            |
 | Port 8888 in use           | Stop other Jupyter instances or change port    |
+| No space left on device    | `docker system prune -a` — image needs ~11 GB  |
+| `docker compose` not found | Install compose plugin (see SETUP_LINUX.md)    |
 
 
 ## Need Help?

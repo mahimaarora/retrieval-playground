@@ -8,13 +8,27 @@ echo "🧩 Retrieval Playground - Docker Workshop Setup"
 echo "================================================"
 echo ""
 
+# Prefer Docker Compose V2 plugin (`docker compose`); fall back to legacy `docker-compose`
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE=(docker compose)
+elif command -v docker-compose &>/dev/null; then
+    DOCKER_COMPOSE=(docker-compose)
+else
+    echo "❌ Docker Compose is not installed!"
+    echo ""
+    echo "Linux:  sudo apt-get install docker-compose-plugin"
+    echo "Mac:    brew install docker-compose"
+    echo ""
+    exit 1
+fi
+
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
     echo "❌ Docker is not installed!"
     echo ""
     echo "Please install Docker Desktop from:"
     echo "  Mac: https://docs.docker.com/desktop/install/mac-install/"
-    echo "  Linux: https://docs.docker.com/desktop/install/linux-install/"
+    echo "  Linux: https://docs.docker.com/engine/install/"
     echo ""
     exit 1
 fi
@@ -32,8 +46,7 @@ echo "✅ Docker is installed and running"
 echo ""
 
 # Free space from failed/interrupted builds (common cause of "No space left on device")
-RECLAIMABLE=$(docker system df --format '{{.Reclaimable}}' 2>/dev/null | head -1 || echo "")
-if [ -n "$RECLAIMABLE" ]; then
+if docker system df &>/dev/null; then
     echo "Docker disk usage:"
     docker system df
     echo ""
@@ -84,7 +97,7 @@ if docker image inspect "$IMAGE_NAME" &>/dev/null; then
     else
         echo "Building Docker image (this may take 5-10 minutes)..."
         echo ""
-        docker-compose build
+        "${DOCKER_COMPOSE[@]}" build
         BUILT=1
     fi
 else
@@ -92,9 +105,9 @@ else
     echo "Tip: the image is ~11 GB (PyTorch, Docling, sentence-transformers)."
     echo "If the build fails with 'No space left on device', run:"
     echo "  docker system prune -a"
-    echo "and increase Docker Desktop disk limit (Settings → Resources)."
+    echo "and ensure Docker has 20 GB+ free disk space."
     echo ""
-    docker-compose build
+    "${DOCKER_COMPOSE[@]}" build
     BUILT=1
 fi
 
@@ -105,7 +118,7 @@ fi
 echo ""
 echo "Starting Jupyter Notebook server..."
 echo ""
-docker-compose up -d
+"${DOCKER_COMPOSE[@]}" up -d
 
 echo ""
 echo "✅ Jupyter Notebook is running!"
@@ -120,7 +133,7 @@ echo ""
 echo "📚 Navigate to: retrieval_playground/tutorial/"
 echo ""
 echo "💡 Useful commands:"
-echo "   Stop:     docker-compose down"
-echo "   Restart:  docker-compose restart"
-echo "   Logs:     docker-compose logs -f"
+echo "   Stop:     ${DOCKER_COMPOSE[*]} down"
+echo "   Restart:  ${DOCKER_COMPOSE[*]} restart"
+echo "   Logs:     ${DOCKER_COMPOSE[*]} logs -f"
 echo ""
