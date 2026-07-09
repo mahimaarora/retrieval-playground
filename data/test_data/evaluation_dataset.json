@@ -1,16 +1,10 @@
 [
   {
-    "user_input": "got a ~50MB csv on my laptop for prep work — pandas or polars?",
-    "reference_context": "In a nutshell, we found that: for small datasets, Pandas consistently proves to be the best choice with the richest API; when data fits in RAM and there is no need for complete compatibility with Pandas API, Polars is the go-to choice thanks to its in-memory execution and query optimizations; when a GPU is available, CuDF often yields the best performance, while for very large datasets that cannot fit in the GPU memory and RAM, PySpark (thanks to a multithread execution and a query optimizer) proves to be the best option.",
-    "reference": "For small datasets, Pandas is usually the best pick because of its rich API. Polars is preferable when data fits in RAM and full Pandas API compatibility is not required, thanks to in-memory execution and query optimizations.",
-    "source_file": "2023_Dataframe_Libraries_Evaluation.pdf"
-  },
-  {
-    "user_input": "how much time do DS folks actually burn on data prep vs modeling?",
-    "reference_context": "It is said that data scientists spend up to 80% of their time on data preparation [31]. This also depends on the lack of support in the choice among many different available libraries and in the design of the pipeline that best suits both the dataset and the task at hand.",
-    "reference": "Data scientists may spend up to 80% of their time on data preparation, partly because choosing libraries and designing the right pipeline is difficult and poorly supported.",
-    "source_file": "2023_Dataframe_Libraries_Evaluation.pdf"
-  },
+    "user_input": "why build a climate KG for AutoClimDS — can't frontier LLMs just web-search CMIP datasets?",
+    "reference_context": "When given the same tasks, state-of-the-art general-purpose LLMs (e.g., ChatGPT GPT-5.1) cannot independently identify authoritative datasets or construct valid retrieval workflows using standard web access. This highlights the necessity of structured scientific memory for agentic scientific reasoning. By encoding procedural workflow knowledge into a KG and integrating it with existing technologies (cloud APIs, LLMs, sandboxed execution), AutoClimDS demonstrates that the KG serves as the essential enabling component.",
+    "reference": "General-purpose LLMs like GPT-5.1 failed to find authoritative climate datasets or valid retrieval workflows via web access alone. AutoClimDS shows a curated knowledge graph is the essential structural layer for reliable agentic climate data science.",
+    "source_file": "2025_AutoClimDS.pdf"
+  },  
   {
     "user_input": "can chatgpt-4 speed up pillow/numpy internals without a maintainer in the loop?",
     "reference_context": "We find that contemporary LLM ChatGPT-4 (state September and October 2023) is surprisingly adept at optimizing energy and compute efficiency. However, this is only the case in interactive use, with a human expert in the loop. In all attempts, the performance improvement is significant (factor up to 38).",
@@ -22,6 +16,18 @@
     "reference_context": "A TPU (Tensor Processing Unit) is a specialized type of hardware developed by Google that is optimized for machine learning tasks, particularly those that use neural networks. TPUs are designed to accelerate the computation of tensor operations, which are at the heart of machine learning algorithms, such as matrix multiplications in deep learning.",
     "reference": "A TPU is Google-developed hardware specialized for machine learning, especially neural networks, by accelerating tensor operations like the matrix multiplications used in deep learning.",
     "source_file": "2024_GPU_CUDA_ML.pdf"
+  },  
+  {
+    "user_input": "got a ~50MB csv on my laptop for prep work — pandas or polars?",
+    "reference_context": "In a nutshell, we found that: for small datasets, Pandas consistently proves to be the best choice with the richest API; when data fits in RAM and there is no need for complete compatibility with Pandas API, Polars is the go-to choice thanks to its in-memory execution and query optimizations; when a GPU is available, CuDF often yields the best performance, while for very large datasets that cannot fit in the GPU memory and RAM, PySpark (thanks to a multithread execution and a query optimizer) proves to be the best option.",
+    "reference": "For small datasets, Pandas is usually the best pick because of its rich API. Polars is preferable when data fits in RAM and full Pandas API compatibility is not required, thanks to in-memory execution and query optimizations.",
+    "source_file": "2023_Dataframe_Libraries_Evaluation.pdf"
+  },
+  {
+    "user_input": "how much time do DS folks actually burn on data prep vs modeling?",
+    "reference_context": "It is said that data scientists spend up to 80% of their time on data preparation [31]. This also depends on the lack of support in the choice among many different available libraries and in the design of the pipeline that best suits both the dataset and the task at hand.",
+    "reference": "Data scientists may spend up to 80% of their time on data preparation, partly because choosing libraries and designing the right pipeline is difficult and poorly supported.",
+    "source_file": "2023_Dataframe_Libraries_Evaluation.pdf"
   },
   {
     "user_input": "why is GPU training the default for NNs instead of just throwing more CPU cores at it?",
@@ -52,12 +58,6 @@
     "reference_context": "We found that: (1) Agent Laboratory driven by o1-preview generates the best research outcomes; (2) The generated machine learning code is able to achieve state-of-the-art performance compared to existing methods; (3) Human involvement, providing feedback at each stage, significantly improves the overall quality of research; (4) Agent Laboratory significantly reduces research expenses, achieving an 84% decrease compared to previous autonomous research methods.",
     "reference": "o1-preview produced the best outcomes, generated ML code reached SOTA-level performance, human feedback at each stage materially improved quality, and overall research cost fell 84% versus prior autonomous methods.",
     "source_file": "2025_Agent_Laboratory.pdf"
-  },
-  {
-    "user_input": "why build a climate KG for AutoClimDS — can't frontier LLMs just web-search CMIP datasets?",
-    "reference_context": "When given the same tasks, state-of-the-art general-purpose LLMs (e.g., ChatGPT GPT-5.1) cannot independently identify authoritative datasets or construct valid retrieval workflows using standard web access. This highlights the necessity of structured scientific memory for agentic scientific reasoning. By encoding procedural workflow knowledge into a KG and integrating it with existing technologies (cloud APIs, LLMs, sandboxed execution), AutoClimDS demonstrates that the KG serves as the essential enabling component.",
-    "reference": "General-purpose LLMs like GPT-5.1 failed to find authoritative climate datasets or valid retrieval workflows via web access alone. AutoClimDS shows a curated knowledge graph is the essential structural layer for reliable agentic climate data science.",
-    "source_file": "2025_AutoClimDS.pdf"
   },
   {
     "user_input": "need generative models for continuous fields (velocity, stress) not pixels — what is FunDiff?",
