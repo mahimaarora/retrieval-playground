@@ -11,7 +11,7 @@ from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from flashrank import RerankRequest
 
-from retrieval_playground.utils import config, constants
+from retrieval_playground.utils import config
 from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.utils.pylogger import get_python_logger
 

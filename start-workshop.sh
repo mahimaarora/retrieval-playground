@@ -31,6 +31,20 @@ fi
 echo "✅ Docker is installed and running"
 echo ""
 
+# Free space from failed/interrupted builds (common cause of "No space left on device")
+RECLAIMABLE=$(docker system df --format '{{.Reclaimable}}' 2>/dev/null | head -1 || echo "")
+if [ -n "$RECLAIMABLE" ]; then
+    echo "Docker disk usage:"
+    docker system df
+    echo ""
+    DANGLING=$(docker images -f "dangling=true" -q 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$DANGLING" -gt 0 ]; then
+        echo "Cleaning $DANGLING dangling image layer(s) from previous builds..."
+        docker image prune -f
+        echo ""
+    fi
+fi
+
 # Check for .env file
 if [ ! -f .env ]; then
     echo "⚠️  .env file not found!"
@@ -59,12 +73,35 @@ EOF
     fi
 fi
 
-echo "Building Docker image (this may take 5-10 minutes on first run)..."
-echo ""
-docker-compose build
+BUILT=0
+IMAGE_NAME="retrieval-playground-retrieval-playground:latest"
+if docker image inspect "$IMAGE_NAME" &>/dev/null; then
+    echo "Found existing workshop image ($IMAGE_NAME)."
+    read -p "Rebuild image? [y/N] " REBUILD
+    if [[ ! "$REBUILD" =~ ^[Yy]$ ]]; then
+        echo "Skipping build, using existing image."
+        echo ""
+    else
+        echo "Building Docker image (this may take 5-10 minutes)..."
+        echo ""
+        docker-compose build
+        BUILT=1
+    fi
+else
+    echo "Building Docker image (this may take 5-10 minutes on first run)..."
+    echo "Tip: the image is ~11 GB (PyTorch, Docling, sentence-transformers)."
+    echo "If the build fails with 'No space left on device', run:"
+    echo "  docker system prune -a"
+    echo "and increase Docker Desktop disk limit (Settings → Resources)."
+    echo ""
+    docker-compose build
+    BUILT=1
+fi
 
-echo ""
-echo "✅ Build complete!"
+if [ "$BUILT" -eq 1 ]; then
+    echo ""
+    echo "✅ Build complete!"
+fi
 echo ""
 echo "Starting Jupyter Notebook server..."
 echo ""

@@ -23,7 +23,7 @@ from ragas.metrics import (
 )
 from ragas.metrics import context_precision as default_context_precision
 
-from retrieval_playground.utils import constants
+from retrieval_playground.utils import config
 from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.utils.pylogger import get_python_logger
 
@@ -136,7 +136,7 @@ def run_ragas(
 
     `references` must be reference **answers** for LLM metrics.
     """
-    logger = get_python_logger(log_level=constants.PYTHON_LOG_LEVEL)
+    logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
     metric_names = [name for name in metrics if name in METRIC_REGISTRY]
     if not metric_names:
         return {}

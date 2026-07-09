@@ -1,0 +1,17 @@
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.ipynb_checkpoints
+.env
+.venv
+venv
+node_modules
+data/results
+data/qdrant_db
+data/images
+data/images_temp
+data/models
+*.md
+!retrieval_playground/**/README.md

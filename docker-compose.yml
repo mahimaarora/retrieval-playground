@@ -16,7 +16,9 @@ services:
       # Mount utils (ragas compat patch) and package init
       - ./retrieval_playground/utils:/workspace/retrieval_playground/utils
       - ./retrieval_playground/__init__.py:/workspace/retrieval_playground/__init__.py
-      # Mount data directory
+      # Mount repo-root data (test sets, workshop PDFs, results)
+      - ./data:/workspace/data
+      # Legacy package data path (sample papers bundled with the package)
       - ./retrieval_playground/data:/workspace/retrieval_playground/data
       # Mount .env file if it exists
       - ./.env:/workspace/.env:ro

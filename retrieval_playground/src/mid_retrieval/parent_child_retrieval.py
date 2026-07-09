@@ -16,7 +16,7 @@ from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient, models
 
-from retrieval_playground.utils import config, constants
+from retrieval_playground.utils import config
 from retrieval_playground.utils.model_manager import model_manager
 from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStrategy
 
