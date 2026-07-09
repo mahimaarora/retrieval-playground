@@ -31,20 +31,21 @@ mid_retrieval/
 ### 1. **Hybrid Search** (BM25 + Dense)
 Combines keyword matching with semantic search.
 
+**Setup (one-time):**
+```bash
+# Create recursive collection first
+python -m retrieval_playground.utils.collection_manager recursive --overwrite
+
+# Create hybrid collection (adds BM25 to recursive)
+python -m retrieval_playground.utils.collection_manager hybrid --overwrite
+```
+
+**Usage:**
 ```python
 from retrieval_playground.src.mid_retrieval.hybrid_search import HybridRetriever
-from retrieval_playground.src.pre_retrieval.chunking_manager import ChunkingStrategy
 
-retriever = HybridRetriever(
-    strategy=ChunkingStrategy.RECURSIVE_CHARACTER,
-    use_cloud=True
-)
-
-results = retriever.search(
-    query="What is BERT?",
-    k=5,
-    bm25_weight=0.5  # Balance between BM25 and dense
-)
+retriever = HybridRetriever(collection_name="hybrid")
+results = retriever.search(query="What is BERT?", k=5)
 ```
 
 **When to use:** Queries with specific keywords + semantic meaning
@@ -80,11 +81,7 @@ Automatically adjusts parameters based on query complexity.
 ```python
 from retrieval_playground.src.mid_retrieval.adaptive_retrieval import AdaptiveRetriever
 
-retriever = AdaptiveRetriever(
-    strategy=ChunkingStrategy.RECURSIVE_CHARACTER
-)
-
-# Auto-configures k, search method, reranking
+retriever = AdaptiveRetriever(collection_name="hybrid")
 results = retriever.search("Compare BERT and GPT")
 ```
 
@@ -119,11 +116,7 @@ Semantic routing determines retrieval strategy.
 ```python
 from retrieval_playground.src.mid_retrieval.route_driven_retrieval import RouteDrivenRetriever
 
-retriever = RouteDrivenRetriever(
-    strategy=ChunkingStrategy.RECURSIVE_CHARACTER
-)
-
-# Automatically routes to best method
+retriever = RouteDrivenRetriever()
 results = retriever.search("Compare PyTorch vs JAX")
 ```
 

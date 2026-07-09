@@ -70,7 +70,34 @@ Simple 3-step setup for the Retrieval Playground workshop.
   - Rename the copy to `.env` (remove .example)
 3. **Edit .env file:**
   - Right-click `.env` → Open with Notepad
-  - Replace the placeholder values with keys from instructor:
+  
+  **Option A: Use Instructor's Qdrant (Read-only, Pre-ingested Data)**
+  
+  Instructor will provide credentials for a shared Qdrant cluster with pre-ingested data:
+  ```
+  GOOGLE_API_KEY=your_key_here
+  QDRANT_URL=instructor_provided_url
+  QDRANT_KEY=instructor_provided_key
+  ```
+
+  **Option B: Create Your Own Qdrant (For Ingestion Practice)**
+  
+  If you want to try document ingestion yourself:
+  
+  1. Visit https://qdrant.tech and sign up
+  2. Click "Create Cluster"
+  3. Enter cluster name: `scipy_workshop`
+  4. Select a region (any region)
+  5. Click "Create Free Cluster"
+  6. Copy your **Cluster Endpoint** (QDRANT_URL)
+  7. Copy your **API Key** (QDRANT_KEY)
+  8. Add to .env:
+     ```
+     GOOGLE_API_KEY=your_key_here
+     QDRANT_URL=your_cluster_endpoint
+     QDRANT_KEY=your_api_key
+     ```
+  
   - Save and close
 
 ---

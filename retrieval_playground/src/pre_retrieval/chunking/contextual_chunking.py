@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-from langchain_qdrant import QdrantVectorStore
 
 from retrieval_playground.utils.model_manager import model_manager
 from .base_chunking import BaseChunking
@@ -99,40 +98,29 @@ class ContextualChunking(BaseChunking):
         self.add_chunk_ids(contextual_chunks)
         return contextual_chunks
 
-    def chunk_documents(
+    def chunk_pdf_directory(
         self,
-        pdf_directory: str,
-        vector_store: QdrantVectorStore
-    ) -> None:
+        pdf_directory: str
+    ) -> List[Document]:
         """
         Chunk documents using contextual enhancement.
 
-        Memory Management:
-        - Processes one PDF at a time
-        - Pushes chunks to Qdrant immediately after each file
-        - Clears memory before next file
-        - LLM calls add processing time but not memory overhead
-
         Args:
             pdf_directory: Path to directory containing PDF files
-            vector_store: QdrantVectorStore to store chunks
+
+        Returns:
+            List of contextually enhanced Document objects
         """
         self.logger.info("Starting Contextual Chunking (LLM-Enhanced)")
         self.logger.info("⚠️  This will make LLM calls - expect slower processing")
 
+        all_chunks = []
+
         def process_pdf(pdf_file: Path) -> int:
-            # Step 1: Load full document
             pdf_docs = self.load_pdf(pdf_file)
-
-            # Step 2: Get full document text
             full_text = "\n\n".join([doc.page_content for doc in pdf_docs])
+            full_text_preview = full_text[:8000] if len(full_text) > 8000 else full_text
 
-            # Limit full text to fit in context window
-            full_text_preview = (
-                full_text[:8000] if len(full_text) > 8000 else full_text
-            )
-
-            # Step 3: Generate ONE context summary for the entire file
             self.logger.info(f"    Generating file-level context using LLM...")
 
             try:
@@ -145,21 +133,12 @@ class ContextualChunking(BaseChunking):
                 self.logger.warning(f"    ⚠️  Context generation failed: {e}")
                 file_context = f"This chunk is from the document: {pdf_file.name}"
 
-            # Step 4: Create base chunks
             base_chunks = self.base_splitter.split_documents(pdf_docs)
+            self.logger.info(f"    Adding same context to all {len(base_chunks)} chunks...")
 
-            self.logger.info(
-                f"    Adding same context to all {len(base_chunks)} chunks..."
-            )
-
-            # Step 5: Add the SAME context to ALL chunks in this file
             contextual_chunks = []
-
             for chunk in base_chunks:
-                # Combine file-level context + original chunk
                 enriched_content = f"{file_context}\n\n---\n\n{chunk.page_content}"
-
-                # Create enriched document
                 contextual_doc = Document(
                     page_content=enriched_content,
                     metadata={
@@ -167,17 +146,11 @@ class ContextualChunking(BaseChunking):
                         "chunking_strategy": self.strategy_name
                     }
                 )
-
                 contextual_chunks.append(contextual_doc)
 
-            # Step 5: Add chunk IDs
             self.add_chunk_ids(contextual_chunks)
+            all_chunks.extend(contextual_chunks)
 
-            # Step 6: Push to Qdrant immediately (one file at a time)
-            vector_store.add_documents(contextual_chunks)
-            self.logger.info(f"    ✓ Pushed {len(contextual_chunks)} chunks to Qdrant")
-
-            # Step 7: Clear memory
             chunk_count = len(contextual_chunks)
             del pdf_docs
             del full_text
@@ -187,13 +160,13 @@ class ContextualChunking(BaseChunking):
 
             return chunk_count
 
-        # Process all PDFs (one at a time for memory efficiency)
         total = self.process_pdf_directory(pdf_directory, process_pdf)
-
         self.logger.info(
             f"✅ Contextual chunking complete: {total} total chunks "
             f"(with LLM-generated context)"
         )
+
+        return all_chunks
 
     def _generate_file_context(
         self,

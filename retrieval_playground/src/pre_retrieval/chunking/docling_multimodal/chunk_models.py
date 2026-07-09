@@ -14,24 +14,17 @@ class ChunkType(Enum):
     IMAGE = "image"
 
 
-class BaseChunk(BaseModel):
-    """Base class for all chunk types."""
+class TextChunk(BaseModel):
+    """Chunk containing text content."""
+    model_config = ConfigDict(use_enum_values=True)
+
     chunk_id: str = Field(description="Unique identifier for the chunk")
-    chunk_type: ChunkType = Field(description="Type of content chunk")
-    content: str = Field(default="", description="Main content of the chunk (text, table description, or image description)")
+    chunk_type: ChunkType = Field(default=ChunkType.TEXT)
+    content: str = Field(default="", description="Main content of the chunk")
     sequence_number: int = Field(default=0, description="Order of chunk in document (0-indexed)")
     source_document: Optional[str] = Field(default=None, description="Path or name of source document")
     source_page: Optional[int] = Field(default=None, description="Source page number (1-indexed)")
     parent_heading: Optional[str] = Field(default=None, description="Text of the current section heading")
-    extraction_timestamp: Optional[datetime] = Field(default=None, description="When the chunk was extracted")
-
-    class Config:
-        use_enum_values = True
-
-
-class TextChunk(BaseChunk):
-    """Chunk containing text content."""
-    chunk_type: ChunkType = Field(default=ChunkType.TEXT)
     word_count: Optional[int] = Field(default=None, description="Number of words in text")
     char_count: Optional[int] = Field(default=None, description="Number of characters in text")
 
@@ -45,11 +38,17 @@ class TextChunk(BaseChunk):
         return self
 
 
-class TableChunk(BaseChunk):
+class TableChunk(BaseModel):
     """Chunk containing table data as pandas DataFrame."""
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True, use_enum_values=True)
 
+    chunk_id: str = Field(description="Unique identifier for the chunk")
     chunk_type: ChunkType = Field(default=ChunkType.TABLE)
+    content: str = Field(default="", description="Table description")
+    sequence_number: int = Field(default=0, description="Order of chunk in document (0-indexed)")
+    source_document: Optional[str] = Field(default=None, description="Path or name of source document")
+    source_page: Optional[int] = Field(default=None, description="Source page number (1-indexed)")
+    parent_heading: Optional[str] = Field(default=None, description="Text of the current section heading")
     dataframe: pd.DataFrame = Field(description="Table data as pandas DataFrame")
     columns: Optional[List[str]] = Field(default=None, description="List of column names")
     num_rows: Optional[int] = Field(default=None, description="Number of rows")
@@ -72,9 +71,17 @@ class TableChunk(BaseChunk):
         return self.dataframe.columns.tolist()
 
 
-class ImageChunk(BaseChunk):
+class ImageChunk(BaseModel):
     """Chunk containing image data."""
+    model_config = ConfigDict(use_enum_values=True)
+
+    chunk_id: str = Field(description="Unique identifier for the chunk")
     chunk_type: ChunkType = Field(default=ChunkType.IMAGE)
+    content: str = Field(default="", description="Image description")
+    sequence_number: int = Field(default=0, description="Order of chunk in document (0-indexed)")
+    source_document: Optional[str] = Field(default=None, description="Path or name of source document")
+    source_page: Optional[int] = Field(default=None, description="Source page number (1-indexed)")
+    parent_heading: Optional[str] = Field(default=None, description="Text of the current section heading")
     image_path: Optional[str] = Field(default=None, description="Path where extracted image is saved")
     image_format: Optional[str] = Field(default=None, description="Image format (png, jpg, gif, webp, etc.)")
     image_type: Optional[str] = Field(default="other", description="Type of image (photo, diagram, chart, etc.)")

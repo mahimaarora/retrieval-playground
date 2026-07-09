@@ -99,16 +99,39 @@ notepad .env
 
 Add your API keys:
 
+**Option A: Use Instructor's Qdrant (Read-only, Pre-ingested Data)**
+
+Instructor will provide credentials for a shared Qdrant cluster with pre-ingested data:
+
 ```env
 # Required: Google Gemini API Key
 GOOGLE_API_KEY=your_key_here
 
-# Optional: OpenAI API Key (alternative)
-# OPENAI_API_KEY=your_key_here
+# Required: Qdrant credentials (provided by instructor)
+QDRANT_URL=instructor_provided_url
+QDRANT_KEY=instructor_provided_key
+```
 
-# Required: Qdrant credentials
-QDRANT_URL=your_qdrant_url_here
-QDRANT_KEY=your_qdrant_key_here
+**Option B: Create Your Own Qdrant (For Ingestion Practice)**
+
+If you want to try document ingestion yourself:
+
+1. Visit https://qdrant.tech and sign up
+2. Click "Create Cluster"
+3. Enter cluster name: `scipy_workshop`
+4. Select a region (any region)
+5. Click "Create Free Cluster"
+6. Copy your **Cluster Endpoint** (QDRANT_URL)
+7. Copy your **API Key** (QDRANT_KEY)
+8. Add to .env:
+
+```env
+# Required: Google Gemini API Key
+GOOGLE_API_KEY=your_key_here
+
+# Required: Qdrant credentials (your own cluster)
+QDRANT_URL=your_cluster_endpoint
+QDRANT_KEY=your_api_key
 ```
 
 ---

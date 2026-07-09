@@ -10,7 +10,6 @@ import shutil
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from langchain_core.documents import Document
-from langchain_qdrant import QdrantVectorStore
 from pypdf import PdfReader
 
 from .base_chunking import BaseChunking
@@ -147,32 +146,25 @@ class DoclingChunking(BaseChunking):
 
         return all_chunks
 
-    def chunk_documents(
+    def chunk_pdf_directory(
         self,
-        pdf_directory: str,
-        vector_store: QdrantVectorStore
-    ) -> None:
+        pdf_directory: str
+    ) -> List[Document]:
         """
         Chunk documents using Docling multimodal extraction.
 
-        Images are saved to a permanent directory (data/images) for production use.
-
-        Memory Management:
-        - Processes one PDF at a time
-        - Pushes chunks to Qdrant immediately after each file
-        - Clears memory before next file
-        - Images saved to disk (not kept in memory)
-
         Args:
             pdf_directory: Path to directory containing PDF files
-            vector_store: QdrantVectorStore to store chunks
+
+        Returns:
+            List of Document objects (text, table, and image chunks)
         """
-        # Create parser with permanent image directory for production
         self.parser = self._get_parser(str(config.DOCLING_IMAGES_DIR))
 
         self.logger.info("Starting Docling Multimodal Chunking")
         self.logger.info("    Extracting: Text + Tables + Images")
 
+        all_documents = []
         total_text_chunks = 0
         total_table_chunks = 0
         total_image_chunks = 0
@@ -180,33 +172,27 @@ class DoclingChunking(BaseChunking):
         def process_pdf(pdf_file: Path) -> int:
             nonlocal total_text_chunks, total_table_chunks, total_image_chunks
 
-            # Step 1: Parse PDF to extract all chunk types
             chunks = self.parser.parse(str(pdf_file))
 
             if not chunks:
                 self.logger.warning(f"    ⚠️  No chunks extracted from {pdf_file.name}")
                 return 0
 
-            # Step 2: Convert to LangChain Documents for Qdrant
             documents = []
-
             for chunk in chunks:
-                # Prepare metadata
                 metadata = {
                     "source": pdf_file.name,
                     "chunking_strategy": self.strategy_name,
-                    "chunk_type": chunk.chunk_type,  # "text", "table", or "image"
+                    "chunk_type": chunk.chunk_type,
                     "chunk_id": chunk.chunk_id,
                     "sequence_number": chunk.sequence_number,
                 }
 
-                # Add optional metadata
                 if chunk.source_page:
                     metadata["source_page"] = chunk.source_page
                 if chunk.parent_heading:
                     metadata["parent_heading"] = chunk.parent_heading
 
-                # Add type-specific metadata
                 if isinstance(chunk, TextChunk):
                     metadata["word_count"] = chunk.word_count
                     metadata["char_count"] = chunk.char_count
@@ -216,7 +202,6 @@ class DoclingChunking(BaseChunking):
                     metadata["num_rows"] = chunk.num_rows
                     metadata["num_cols"] = chunk.num_cols
                     metadata["columns"] = chunk.get_columns()
-                    # Store table data as JSON
                     metadata["table_data"] = chunk.dataframe.to_dict(orient="records")
                     total_table_chunks += 1
 
@@ -227,37 +212,28 @@ class DoclingChunking(BaseChunking):
                         metadata["image_format"] = chunk.image_format
                     if chunk.image_type:
                         metadata["image_type"] = chunk.image_type
-                    # Note: We don't store base64 in Qdrant (too large)
-                    # Image files are saved to disk, retrievable via image_path
                     total_image_chunks += 1
 
-                # Create LangChain Document
-                doc = Document(
-                    page_content=chunk.content,  # Text or AI description
-                    metadata=metadata
-                )
+                doc = Document(page_content=chunk.content, metadata=metadata)
                 documents.append(doc)
 
-            # Step 3: Push to Qdrant immediately (one file at a time)
-            vector_store.add_documents(documents)
+            all_documents.extend(documents)
 
             text_count = sum(1 for c in chunks if isinstance(c, TextChunk))
             table_count = sum(1 for c in chunks if isinstance(c, TableChunk))
             image_count = sum(1 for c in chunks if isinstance(c, ImageChunk))
 
             self.logger.info(
-                f"    ✓ Pushed {len(documents)} chunks to Qdrant "
+                f"    ✓ Created {len(documents)} chunks "
                 f"({text_count} text, {table_count} tables, {image_count} images)"
             )
 
-            # Step 4: Clear memory
             chunk_count = len(chunks)
             del chunks
             del documents
 
             return chunk_count
 
-        # Process all PDFs (one at a time for memory efficiency)
         total = self.process_pdf_directory(pdf_directory, process_pdf)
 
         self.logger.info(
@@ -266,3 +242,5 @@ class DoclingChunking(BaseChunking):
             f"   - {total_table_chunks} table chunks\n"
             f"   - {total_image_chunks} image chunks"
         )
+
+        return all_documents

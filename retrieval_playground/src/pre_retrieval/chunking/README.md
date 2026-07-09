@@ -6,56 +6,34 @@ Clean implementation of 4 document chunking strategies for RAG systems.
 
 Breaks large documents into smaller chunks for better retrieval. Each strategy uses a different approach.
 
-## Memory-Efficient Design
-
-All strategies process **one PDF at a time**:
-- ✅ Load one PDF → Chunk it → Push to Qdrant → Clear memory
-- ✅ Prevents memory overflow with large document sets
-- ✅ Immediate persistence (chunks saved right away)
-
 ## Quick Start
 
-```python
-from retrieval_playground.src.pre_retrieval.chunking import (
-    ChunkingManager,
-    ChunkingStrategy
-)
-from retrieval_playground.utils import config
-
-# Initialize
-manager = ChunkingManager()
+```bash
+# Run single strategy
+python -m retrieval_playground.utils.collection_manager recursive --overwrite
 
 # Run all strategies
-manager.create_all_chunks(
-    pdf_directory=str(config.SAMPLE_PAPERS_DIR),
-    use_cloud=False
-)
+python -m retrieval_playground.utils.collection_manager all --overwrite
 ```
 
-## The 4 Strategies
+## The Strategies
 
-### 1. Recursive Character
+### 1. Recursive
 **What:** Splits text at natural boundaries (paragraphs → sentences → words)  
 **Best for:** Most documents, learning RAG  
 **Speed:** Fast
 
-```python
-manager.create_chunks(
-    pdf_directory="path/to/pdfs",
-    strategy=ChunkingStrategy.RECURSIVE_CHARACTER
-)
+```bash
+python -m retrieval_playground.utils.collection_manager recursive --overwrite
 ```
 
 ### 2. Docling
 **What:** Preserves document structure, extracts images/tables  
 **Best for:** Research papers, technical docs  
-**Speed:** Fast
+**Speed:** Moderate
 
-```python
-manager.create_chunks(
-    pdf_directory="path/to/pdfs",
-    strategy=ChunkingStrategy.DOCLING
-)
+```bash
+python -m retrieval_playground.utils.collection_manager docling --overwrite
 ```
 
 ### 3. Parent-Child
@@ -63,11 +41,8 @@ manager.create_chunks(
 **Best for:** Production RAG systems  
 **Speed:** Fast
 
-```python
-manager.create_chunks(
-    pdf_directory="path/to/pdfs",
-    strategy=ChunkingStrategy.PARENT_CHILD
-)
+```bash
+python -m retrieval_playground.utils.collection_manager parent_child --overwrite
 ```
 
 ### 4. Contextual
@@ -75,11 +50,19 @@ manager.create_chunks(
 **Best for:** Maximum accuracy, multi-document search  
 **Speed:** Slow (requires LLM calls)
 
-```python
-manager.create_chunks(
-    pdf_directory="path/to/pdfs",
-    strategy=ChunkingStrategy.CONTEXTUAL
-)
+```bash
+python -m retrieval_playground.utils.collection_manager contextual --overwrite
+```
+
+### 5. Hybrid
+**What:** Adds BM25 keyword search to recursive collection  
+**Best for:** Queries with specific keywords + semantic meaning  
+**Speed:** Fast (copies existing collection)
+
+```bash
+# Requires recursive collection to exist first
+python -m retrieval_playground.utils.collection_manager recursive --overwrite
+python -m retrieval_playground.utils.collection_manager hybrid --overwrite
 ```
 
 ## File Structure
@@ -89,28 +72,25 @@ chunking/
 ├── __init__.py                  # Module exports
 ├── README.md                    # This file
 ├── base_chunking.py            # Shared utilities
-├── chunking_manager.py         # Main entry point (use this!)
 ├── recursive_chunking.py       # Strategy 1
 ├── docling_chunking.py         # Strategy 2
 ├── parent_child_chunking.py    # Strategy 3
 └── contextual_chunking.py      # Strategy 4
+
+utils/
+└── collection_manager.py       # Ingestion entry point (use this!)
 ```
 
 ## Which Strategy to Use?
 
 | Your Goal | Use This |
 |-----------|----------|
-| Learning RAG | Recursive Character |
-| PDFs with images/tables | Docling |
-| Production system | Parent-Child |
-| Best accuracy | Contextual |
-
-## Command Line Usage
-
-```bash
-cd retrieval_playground/src/pre_retrieval/chunking
-python chunking_manager.py
-```
+| Learning RAG | recursive |
+| PDFs with images/tables | docling |
+| Production system | parent_child |
+| Best accuracy | contextual |
+| Keyword + semantic search | hybrid |
+| Try everything | all |
 
 ## Modifying Chunk Size
 

@@ -64,14 +64,28 @@ class ModelManager:
         try:
             self._logger.info("🔄 ModelManager: Initializing shared AI models...")
 
-            # Initialize LLM
-            self._llm = ChatGoogleGenerativeAI(
+            # Initialize LLM with response format handling
+            base_llm = ChatGoogleGenerativeAI(
                 model=config.MODEL_NAME,
                 temperature=0.1,
                 max_tokens=None,
                 timeout=None,
                 max_retries=3,
             )
+
+            # Wrap to handle list-based content from newer Gemini models
+            from langchain_core.runnables import RunnableLambda
+
+            def extract_text(ai_message):
+                """Extract text from AIMessage, handling both string and list formats."""
+                content = ai_message.content
+                if isinstance(content, list):
+                    # New format: list of content blocks
+                    text_parts = [block.get('text', '') for block in content if block.get('type') == 'text']
+                    ai_message.content = ''.join(text_parts)
+                return ai_message
+
+            self._llm = base_llm | RunnableLambda(extract_text)
 
             # Initialize embeddings
             self._embeddings = GoogleGenerativeAIEmbeddings(

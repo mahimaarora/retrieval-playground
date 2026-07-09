@@ -9,7 +9,6 @@ import uuid
 
 from langchain_core.documents import Document
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_qdrant import QdrantVectorStore
 
 from retrieval_playground.utils.pylogger import get_python_logger
 from retrieval_playground.utils import config
@@ -34,19 +33,20 @@ class BaseChunking(ABC):
         self.logger = get_python_logger(log_level=config.PYTHON_LOG_LEVEL)
 
     @abstractmethod
-    def chunk_documents(
+    def chunk_pdf_directory(
         self,
-        pdf_directory: str,
-        vector_store: QdrantVectorStore
-    ) -> None:
+        pdf_directory: str
+    ) -> List[Document]:
         """
-        Chunk documents and store in vector database.
+        Chunk all PDFs in a directory.
 
         Each strategy implements this differently.
 
         Args:
             pdf_directory: Path to directory containing PDF files
-            vector_store: QdrantVectorStore to store chunks
+
+        Returns:
+            List of chunked Document objects
         """
         pass
 

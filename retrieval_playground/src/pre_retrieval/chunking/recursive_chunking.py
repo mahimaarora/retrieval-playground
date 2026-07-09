@@ -9,7 +9,6 @@ BEST FOR: Most documents, learning RAG, fast iteration
 from pathlib import Path
 from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_qdrant import QdrantVectorStore
 from langchain_core.documents import Document
 
 from .base_chunking import BaseChunking
@@ -53,50 +52,38 @@ class RecursiveChunking(BaseChunking):
         self.add_chunk_ids(chunks)
         return chunks
 
-    def chunk_documents(
+    def chunk_pdf_directory(
         self,
-        pdf_directory: str,
-        vector_store: QdrantVectorStore
-    ) -> None:
+        pdf_directory: str
+    ) -> List[Document]:
         """
         Chunk documents using recursive character splitting.
 
-        Memory Management:
-        - Processes one PDF at a time
-        - Pushes chunks to Qdrant immediately after each file
-        - Clears memory before next file
-
         Args:
             pdf_directory: Path to directory containing PDF files
-            vector_store: QdrantVectorStore to store chunks
+
+        Returns:
+            List of chunked Document objects
         """
         self.logger.info("Starting Recursive Character Chunking")
 
+        all_chunks = []
+
         def process_pdf(pdf_file: Path) -> int:
-            # Step 1: Load PDF
             pdf_docs = self.load_pdf(pdf_file)
-
-            # Step 2: Add metadata
             self.add_metadata(pdf_docs, pdf_file)
-
-            # Step 3: Split into chunks (respects boundaries)
             chunks = self.splitter.split_documents(pdf_docs)
-
-            # Step 4: Add unique IDs
             self.add_chunk_ids(chunks)
 
-            # Step 5: Push to Qdrant immediately (one file at a time)
-            vector_store.add_documents(chunks)
-            self.logger.info(f"    ✓ Pushed {len(chunks)} chunks to Qdrant")
-
-            # Step 6: Clear memory
+            all_chunks.extend(chunks)
             chunk_count = len(chunks)
+
             del pdf_docs
             del chunks
 
             return chunk_count
 
-        # Process all PDFs (one at a time for memory efficiency)
         total = self.process_pdf_directory(pdf_directory, process_pdf)
-
         self.logger.info(f"✅ Recursive chunking complete: {total} total chunks")
+
+        return all_chunks

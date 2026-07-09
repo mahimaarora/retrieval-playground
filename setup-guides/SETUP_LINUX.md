@@ -64,16 +64,42 @@ git clone https://github.com/mahimaarora/retrieval-playground.git
 cd retrieval-playground
 
 cp .env.example .env
-nano .env   # or vim, gedit, etc.
+# Edit with your preferred editor (nano, vim, gedit, etc.)
+nano .env
+# or
+vim .env
+# or
+gedit .env
 ```
 
-Add your keys (provided by instructor):
+**Option A: Use Instructor's Qdrant (Read-only, Pre-ingested Data)**
 
+Instructor will provide credentials for a shared Qdrant cluster with pre-ingested data:
 ```env
 GOOGLE_API_KEY=your_key_here
-QDRANT_URL=your_url_here
-QDRANT_KEY=your_key_here
+QDRANT_URL=instructor_provided_url
+QDRANT_KEY=instructor_provided_key
 ```
+
+**Option B: Create Your Own Qdrant (For Ingestion Practice)**
+
+If you want to try document ingestion yourself:
+
+1. Visit https://qdrant.tech and sign up
+2. Click "Create Cluster"
+3. Enter cluster name: `scipy_workshop`
+4. Select a region (any region)
+5. Click "Create Free Cluster"
+6. Copy your **Cluster Endpoint** (QDRANT_URL)
+7. Copy your **API Key** (QDRANT_KEY)
+8. Add to .env:
+   ```env
+   GOOGLE_API_KEY=your_key_here
+   QDRANT_URL=your_cluster_endpoint
+   QDRANT_KEY=your_api_key
+   ```
+
+Save and close the file.
 
 > **Note:** `./start-workshop.sh` can also create `.env` from `.env.example` if you skip this step — just edit the file before the container starts.
 
