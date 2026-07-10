@@ -24,11 +24,15 @@ class RouteRetriever:
 
     Routes:
     - greetings → No retrieval
-    - factual_qa → Hybrid search
-    - comparison → Multi-query
-    - analytical_qa → Multi-query
+    - factual_qa → Hybrid search (BM25 + Dense)
+    - comparison → Multi-query with Hybrid search (generates 3 variants, runs Hybrid for each)
+    - analytical_qa → Multi-query with Hybrid search
     - definition → Hybrid search
     - procedural → Hybrid search
+
+    Note: Multi-query routing uses full Hybrid search (BM25 + Dense) for each variant,
+    not just dense search. This provides better quality by combining keyword matching
+    with semantic similarity across all query variants.
 
     Example:
         retriever = RouteRetriever(collection_name="hybrid")
@@ -83,15 +87,17 @@ class RouteRetriever:
 
         # Step 4: Execute retrieval
         if method == "multi_query":
-            # Multi-query: Generate variants + RRF
+            # Multi-query: Generate variants + Hybrid search for each + RRF fusion
+            # Use full Hybrid (BM25 + Dense) for better quality
             variants = expand_query(query, num_variants=3)
 
             all_results = []
             for variant in variants:
-                results = self.hybrid_retriever._dense_search(variant, k=15)
+                # Use hybrid search (BM25 + Dense) instead of dense-only
+                results = self.hybrid_retriever.search(variant, k=15)
                 all_results.append(results)
 
-            # RRF fusion
+            # RRF fusion across all variant results
             fused_scores = {}
             doc_map = {}
             for results in all_results:
@@ -100,7 +106,8 @@ class RouteRetriever:
                     if doc_id not in fused_scores:
                         fused_scores[doc_id] = 0
                         doc_map[doc_id] = doc
-                    fused_scores[doc_id] += 1 / (60 + rank)
+                    # RRF formula: 1/(k + rank + 1) for 0-indexed ranks
+                    fused_scores[doc_id] += 1 / (60 + rank + 1)
 
             ranked_ids = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
             return [doc_map[doc_id] for doc_id, _ in ranked_ids[:k]]

@@ -18,7 +18,7 @@ from retrieval_playground.utils.model_manager import model_manager
 # CONFIGURATION
 # ============================================================================
 
-ROUTE_SIMILARITY_THRESHOLD = 0.65
+ROUTE_SIMILARITY_THRESHOLD = 0.5  # Lowered from 0.65 to improve matching
 ROUTE_CONFIDENCE_PRECISION = 3
 
 
@@ -62,7 +62,12 @@ factual_route = Route(
         # Definition queries
         "define", "definition of", "what does mean", "meaning of",
         "what is the definition", "terminology of", "what is a", "what are the",
-        "explain the term", "what is meant by", "glossary term"
+        "explain the term", "what is meant by", "glossary term",
+        # Additional general patterns
+        "give me the definition", "can you define", "can you tell me what",
+        "tell me what is", "I want to know what", "could you explain what",
+        "what exactly is", "what exactly are", "give me information on",
+        "provide information about", "describe what is"
     ],
 )
 
@@ -84,11 +89,15 @@ analytical_route = Route(
         "elaborate on", "break down", "walk through the logic",
         # How does/do X work (complex explanatory)
         "how does", "how do", "how did", "how does it work", "how do they work",
+        "how does this work", "how do these work", "working of", "functionality of",
         # Procedural how-to queries
         "how to", "how do I", "how can I", "how should I",
         "steps to", "process for", "procedure for", "method for",
         "guide to", "tutorial on", "instructions for", "way to",
-        "approach to", "technique for", "strategy for"
+        "approach to", "technique for", "strategy for",
+        # Additional general patterns
+        "can you explain how", "could you describe how", "walk me through",
+        "help me understand how", "mechanisms of", "working mechanism"
     ],
 )
 
@@ -113,7 +122,12 @@ comparison_route = Route(
         # Similarity comparison
         "similarities and differences", "similarities between", "how are X and Y similar",
         # Contrast
-        "contrast", "contrast between", "contrasting X and Y"
+        "contrast", "contrast between", "contrasting X and Y",
+        # Additional general patterns
+        "compare and contrast", "comparison between", "can you compare",
+        "what are the differences", "how do they compare", "how do these differ",
+        "what distinguishes", "comparing and contrasting", "relative merits of",
+        "trade-offs between", "choose between", "deciding between"
     ],
 )
 

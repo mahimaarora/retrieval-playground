@@ -1,14 +1,22 @@
 """
-Parent-Child Adaptive Expansion
+Parent-Child Adaptive Retrieval
 
-Automatically expands from precise child chunks to broader parent chunks
-when retrieval quality is low.
+Uses adaptive threshold-based strategy to balance precision and context.
+
+Chunk Sizes (from parent_child_chunking.py):
+- Child chunks: 1536 chars (≈384 tokens) - for precise retrieval
+- Parent chunks: 6144 chars (≈1536 tokens) - for rich context
 
 How it works:
-1. Search child chunks first (precise, 512 tokens)
-2. Check result quality (average score)
-3. If low quality → Auto-expand to parent chunks (2048 tokens)
-4. If high quality → Keep precise child chunks
+1. Search child chunks first (precise matching)
+2. Calculate average similarity score of retrieved children
+3. Decision logic:
+   - If avg_score >= threshold (default 0.7) → Return children (high quality, stay precise)
+   - If avg_score < threshold → Expand to parent chunks (low quality, need more context)
+
+This adaptive approach provides:
+- Precision when matches are strong (return focused child chunks)
+- Context when matches are weak (expand to comprehensive parent chunks)
 """
 
 from typing import List, Optional
@@ -22,16 +30,22 @@ from retrieval_playground.utils.model_manager import model_manager
 
 class ParentChildRetriever:
     """
-    Parent-child retriever with automatic expansion.
+    Parent-child retriever with adaptive threshold-based expansion.
 
     Strategy:
-    - Search child chunks (512 tokens) first
-    - If avg score >= threshold → Keep children (precise)
-    - If avg score < threshold → Expand to parents (2048 tokens, 4× context)
+    - Search child chunks (1536 chars ≈ 384 tokens) first for precise matching
+    - Calculate average similarity score
+    - If avg_score >= threshold → Keep children (high quality, precise)
+    - If avg_score < threshold → Expand to parents (6144 chars ≈ 1536 tokens, 4× context)
+
+    This adaptive approach optimizes the precision-context trade-off:
+    - Strong matches: Return focused child chunks
+    - Weak matches: Expand to parent chunks for more context
 
     Example:
         retriever = ParentChildRetriever(expansion_threshold=0.7)
         results = retriever.search("What is BERT?", k=5)
+        # Returns children if high quality, parents if low quality
     """
 
     def __init__(
