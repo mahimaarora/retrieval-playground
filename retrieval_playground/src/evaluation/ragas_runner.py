@@ -57,6 +57,18 @@ except ImportError:
 METRIC_REGISTRY = {**RETRIEVAL_METRICS, **GENERATION_METRICS, **NVIDIA_METRICS}
 
 
+def _validate_batch_lengths(**named_lengths: int) -> None:
+    """Ensure all RAGAS input columns have the same number of rows."""
+    unique = set(named_lengths.values())
+    if len(unique) <= 1:
+        return
+    detail = ", ".join(f"{name}={length}" for name, length in named_lengths.items())
+    raise ValueError(
+        f"RAGAS evaluation requires equal-length batches ({detail}). "
+        "Slice ground_truths/reference_contexts to match the queries you evaluated."
+    )
+
+
 def _metric_result_key(metric: Any, requested_name: str) -> str:
     """RAGAS may return scores under the metric object's name, not our alias."""
     return getattr(metric, "name", requested_name)
@@ -141,6 +153,15 @@ def run_ragas(
     if not metric_names:
         return {}
 
+    _validate_batch_lengths(
+        questions=len(questions),
+        answers=len(answers),
+        contexts=len(contexts),
+        references=len(references),
+    )
+    if reference_contexts is not None:
+        _validate_batch_lengths(reference_contexts=len(reference_contexts), references=len(references))
+
     data = {
         "user_input": questions,
         "response": answers,
@@ -197,6 +218,10 @@ class RAGEvaluator:
         rag_results: List[Dict[str, Any]],
         ground_truths: List[str],
     ) -> Dict[str, float]:
+        _validate_batch_lengths(
+            rag_results=len(rag_results),
+            ground_truths=len(ground_truths),
+        )
         return self.evaluate_batch(
             questions=[r["question"] for r in rag_results],
             answers=[r["answer"] for r in rag_results],

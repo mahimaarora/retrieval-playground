@@ -63,6 +63,12 @@ class GenerationEvaluator:
         rag_results: List[Dict],
         ground_truths: List[str],
     ) -> GenerationEvalResult:
+        from retrieval_playground.src.evaluation.ragas_runner import _validate_batch_lengths
+
+        _validate_batch_lengths(
+            rag_results=len(rag_results),
+            ground_truths=len(ground_truths),
+        )
         return self.evaluate(
             questions=[r["question"] for r in rag_results],
             answers=[r["answer"] for r in rag_results],
