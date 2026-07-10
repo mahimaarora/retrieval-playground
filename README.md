@@ -23,15 +23,27 @@ A Python toolkit for RAG experimentation and evaluation.
 
 ### Post-Retrieval Strategies
 
-- **Stuff Documents**: Simple concatenation of all retrieved documents  
-- **Refine Chain**: Iterative refinement of answers across documents  
-- **Map-Rerank**: Score and rank answers from individual documents  
-- **Map-Reduce**: Summarize documents first, then combine for final answer
+- **Retrieval Grading**: LLM relevance labels (relevant / irrelevant / ambiguous) to drop false-positive chunks before generation  
+- **Knowledge Refinement**: Sentence- or passage-level tightening to remove filler within kept chunks  
+- **Context Compression**: Extractive (embedding similarity) or abstractive (LLM summary) compression to fit token budgets  
+- **Document Assembly**: Stuff-documents generation over prepared context for final answers
+
+### Evaluation
+
+- **Retrieval metrics**: Classical checks (hit rate@k, MRR, keyword overlap) plus RAGAS context precision/recall  
+- **Generation metrics**: RAGAS faithfulness, answer relevancy, answer accuracy, plus custom length checks  
+- **Tool / agent metrics**: Tool selection accuracy from logged traces (routing demo from Tutorial 1B)  
+- **Custom metrics**: Extend with RAGAS `SingleTurnMetric` or lightweight Python scorers  
+
+### Agentic RAG
+
+- **LangGraph ReAct agent**: One retrieval tool (`retrieve_workshop_docs`) backed by the workshop vector RAG stack  
+- **Prompt-based routing**: Greetings answered directly; technical questions trigger retrieval (no extra router code in the agent loop)  
+- **Lightweight tool eval**: Reuse `ToolEvaluator` on agent runs without full Tutorial 4 metric suite
 
 ### Evaluation & Management
 
-- **RAG Evaluation**: Performance benchmarking with RAGAS metrics  
-- **Model Management**: Unified LLM and embedding model interfaces
+- **Model Management**: Unified LLM and embedding model interfaces (shared across all tutorials)
 
 ## 🚀 Getting Started
 
@@ -69,12 +81,19 @@ chunks = chunker.chunk_documents(documents, strategy="docling")
 
 ## 📓 Interactive Notebooks
 
-Explore RAG techniques through hands-on Jupyter notebooks located in `retrieval_playground/tutorial/`:
+Explore RAG techniques through hands-on Jupyter notebooks in `retrieval_playground/tutorial/` (run in order):
 
-- **1A_Pre_Chunking_Methods.ipynb** - Evaluate and compare different document chunking strategies using RAGAS metrics
-- **1B_Pre_Query_Methods.ipynb** - Demonstrate query expansion, decomposition, rewriting, and self-querying techniques  
-- **2_Mid_Retrieval_Methods.ipynb** - Explore various retrieval methods including MMR, hybrid search, and reranking
-- **3_Post_Retrieval.ipynb** - Compare document chain methods for combining retrieved content into final answers
+| Notebook | Topic |
+|----------|--------|
+| **1A_Pre_Chunking_Methods.ipynb** | Compare chunking strategies (recursive, parent-child, contextual, Docling) |
+| **1B_Pre_Query_Methods.ipynb** | Query expansion, decomposition, rewriting, multi-query, step-back, semantic routing |
+| **2A_Basic_Mid_Retrieval_Methods.ipynb** | Dense search, MMR, score thresholds, metadata filtering |
+| **2B_Advanced_Mid_Retrieval_Methods.ipynb** | Reranking, hybrid BM25+dense search, parent-child adaptive retrieval |
+| **3_Post_Retrieval.ipynb** | Retrieval grading, knowledge refinement, context compression, full context preparation pipeline, document assembly |
+| **4_Evaluation.ipynb** | Retrieval, generation, and tool metrics; RAGAS runners; custom metrics; pipeline scorecard; baseline vs post-retrieval A/B |
+| **5_Agentic_RAG.ipynb** | LangGraph ReAct agent with `retrieve_workshop_docs`; prompt routing; lightweight tool-selection check |
+
+Start with **1A**, or open `setup-guides/verify_setup.ipynb` after environment setup to confirm API keys and dependencies.
 
 ## 📄 License
 
