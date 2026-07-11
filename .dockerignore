@@ -13,5 +13,3 @@ data/qdrant_db
 data/images
 data/images_temp
 data/models
-*.md
-!retrieval_playground/**/README.md
