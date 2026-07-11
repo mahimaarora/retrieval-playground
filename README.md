@@ -2,8 +2,6 @@
 
 A Python toolkit for RAG experimentation and evaluation.
 
-> ⚠️ **Work in Progress**: This repository is actively being developed for workshops and tutorials. Some features may be incomplete or subject to change.
-
 ## ✨ Features
 
 ### Pre-Retrieval Strategies
