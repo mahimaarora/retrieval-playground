@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from typing import Optional
-from typing import Tuple
 
+from langchain_core.messages import AIMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from retrieval_playground.utils.pylogger import get_python_logger
@@ -12,13 +12,55 @@ from flashrank import Ranker
 import numpy as np
 
 
+def message_content(message: AIMessage | str) -> str:
+    """Normalize Gemini/LangChain message content to plain text."""
+    if isinstance(message, str):
+        return message
+    content = message.content
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict) and block.get("text"):
+                parts.append(block["text"])
+            elif isinstance(block, str):
+                parts.append(block)
+        return "".join(parts)
+    return str(content)
+
+
+class NormalizedChatGoogleGenerativeAI(ChatGoogleGenerativeAI):
+    """
+    Gemini chat model that normalizes list-style response content on invoke.
+
+    Replaces the old `base_llm | RunnableLambda(extract_text)` pattern, which
+    returned a RunnableSequence without chat-model methods such as
+    `with_structured_output` (post-retrieval grading) or `agenerate_prompt`
+    (RAGAS). This subclass keeps those APIs while still fixing Gemini content
+    for pre/mid-retrieval call sites that read `response.content`.
+    """
+
+    @staticmethod
+    def _normalize_message(message: AIMessage) -> AIMessage:
+        if isinstance(message.content, list):
+            message.content = message_content(message)
+        return message
+
+    def invoke(self, input, config=None, **kwargs):
+        return self._normalize_message(super().invoke(input, config=config, **kwargs))
+
+    async def ainvoke(self, input, config=None, **kwargs):
+        return self._normalize_message(await super().ainvoke(input, config=config, **kwargs))
+
+
 class ModelManager:
     """
     Singleton model manager that provides shared instances of LLM and embeddings models.
     """
 
     _instance: Optional["ModelManager"] = None
-    _llm: Optional[ChatGoogleGenerativeAI] = None
+    _llm: Optional[NormalizedChatGoogleGenerativeAI] = None
     _embeddings: Optional[GoogleGenerativeAIEmbeddings] = None
     _routing_encoder = None
     _reranker: Optional[Ranker] = None  # Cached reranker instance
@@ -33,13 +75,14 @@ class ModelManager:
             )
         return cls._instance
 
-    def get_llm(self) -> ChatGoogleGenerativeAI:
+    def get_llm(self) -> NormalizedChatGoogleGenerativeAI:
         """
-        Get shared instances of LLM.
+        Get the shared chat model.
 
-        Returns:
-            ChatGoogleGenerativeAI:
-                Shared model instances
+        Works for:
+        - Plain invoke / chains (pre & mid retrieval notebooks)
+        - with_structured_output (post-retrieval grading)
+        - RAGAS evaluation (agenerate_prompt)
         """
         if self._llm is None:
             self._initialize_models()
@@ -64,8 +107,7 @@ class ModelManager:
         try:
             self._logger.info("🔄 ModelManager: Initializing shared AI models...")
 
-            # Initialize LLM
-            self._llm = ChatGoogleGenerativeAI(
+            self._llm = NormalizedChatGoogleGenerativeAI(
                 model=config.MODEL_NAME,
                 temperature=0.1,
                 max_tokens=None,
@@ -73,7 +115,6 @@ class ModelManager:
                 max_retries=3,
             )
 
-            # Initialize embeddings
             self._embeddings = GoogleGenerativeAIEmbeddings(
                 model=config.EMBEDDING_MODEL_NAME
             )
@@ -106,14 +147,12 @@ class ModelManager:
 
         embeddings = self.get_embeddings()
 
-        # Minimal encoder: inherit from DenseEncoder and override __call__
         class GeminiEncoder(DenseEncoder):
             def __call__(self, docs):
                 if isinstance(docs, str):
                     docs = [docs]
                 return np.array(embeddings.embed_documents(docs))
 
-        # Create encoder
         self._routing_encoder = GeminiEncoder(
             name=config.EMBEDDING_MODEL_NAME,
             score_threshold=score_threshold
@@ -121,9 +160,7 @@ class ModelManager:
         return self._routing_encoder
 
     def destroy_routing_encoder(self):
-        """
-        Destroy routing encoder to free memory.
-        """
+        """Destroy routing encoder to free memory."""
         self._routing_encoder = None
 
     def get_reranker(self):
@@ -137,10 +174,8 @@ class ModelManager:
             FlashRank Ranker instance
         """
         if self._reranker is None:
-            # Ensure cache directory exists
             cache_dir = config.ensure_dir(config.FLASHRANK_CACHE_DIR)
 
-            # Initialize with persistent cache
             self._reranker = Ranker(
                 model_name=config.RERANKER_MODEL,
                 cache_dir=str(cache_dir)

@@ -1,132 +1,292 @@
 # Post-Retrieval Processing
 
-This module processes and combines retrieved documents **after** retrieval to generate optimal responses in RAG systems.
+**What is Post-Retrieval?** Techniques applied **after** retrieval (and optional reranking) but **before** generation - to filter noise, tighten passages, and fit the context budget.
 
-## 📁 Contents
+Inspired by components from Corrective RAG (Yan et al., 2024), adapted for this workshop without web-search fallback or query-rewrite loops.
 
-### 📚 **Document Chain Methods** (`3_Post_Retrieval.ipynb`)
-Four powerful approaches for combining retrieved documents:
+---
 
-#### 📄 **Stuff Documents Chain**
-- **Simple concatenation**: Combines all documents into single prompt
-- **Best for**: Small document sets, straightforward queries
-- **Advantages**: Fast, preserves all context
-- **Limitations**: Token limits with large documents
+## 📁 What's Inside
 
-#### 🔄 **Refine Documents Chain** 
-- **Iterative refinement**: Progressively improves answers document by document
-- **Best for**: Complex queries requiring nuanced answers
-- **Advantages**: Handles large document sets, builds comprehensive responses
-- **Process**: Initial answer → refine with each subsequent document
+```
+post_retrieval/
+├── retrieval_grading.py      # LLM relevance grading (relevant / irrelevant / ambiguous)
+├── knowledge_refinement.py   # Strip within-chunk filler (sentence or passage level)
+├── context_compression.py    # Extractive (embedding) or abstractive (LLM) compression
+├── context_preparation.py    # Chains grading → refinement → compression
+├── document_assembly.py      # Stuff chain: concatenate chunks → generate answer
+└── document_chain.py         # Re-exports for backward compatibility
+```
 
-#### 📊 **Map-Rerank Chain**
-- **Score and rank**: Generates individual answers, then selects the best
-- **Best for**: Questions with clear single best answers
-- **Advantages**: Identifies highest quality responses
-- **Process**: Generate answers for each document → score → select top answer
-
-#### 🔀 **Map-Reduce Chain**
-- **Summarize then combine**: Summarizes documents first, then combines summaries
-- **Best for**: Large document collections, synthesis tasks
-- **Advantages**: Scales well, reduces token usage
-- **Process**: Summarize each document → combine all summaries → final answer
+---
 
 ## 🚀 Quick Start
 
+### Prerequisites
+
+**Environment:**
+- `GOOGLE_API_KEY` - grading, refinement, and abstractive compression use Gemini
+- Embeddings via `model_manager` - extractive compression uses cosine similarity
+- Retrieved chunks from mid-retrieval (Tutorial 2) as `langchain_core.documents.Document` objects
+
+**Recommended flow:**
+1. Retrieve with `RAG.retrieve_context()` or mid-retrieval methods
+2. Prepare context with `ContextPreparer`
+3. Generate with `document_assembly.generate_answer()`
+4. Measure impact in Tutorial 4 (baseline vs post-retrieval A/B)
+
 ### Interactive Notebook
-- `retrieval_playground/tutorial/3_Post_Retrieval.ipynb` - Complete tutorial with both LangChain and LangGraph implementations
 
-### Usage Examples
+- `tutorial/3_Post_Retrieval.ipynb` - operational demo: grading report, token counts, pipeline walkthrough
 
-#### Traditional LangChain Approach
+---
+
+## 🔍 Available Techniques
+
+### 1. **Retrieval Grading**
+
+LLM judge assigns each chunk a label before it enters the generation prompt.
+
+**Labels:** `relevant` | `irrelevant` | `ambiguous` (+ confidence + rationale)
+
+**Usage:**
 ```python
-from langchain.chains import StuffDocumentsChain, RefineDocumentsChain
-from langchain.chains import MapRerankDocumentsChain, MapReduceDocumentsChain
-from langchain.prompts import PromptTemplate
+from langchain_core.documents import Document
+from retrieval_playground.src.post_retrieval import RetrievalGrader
 
-# Stuff Chain - Simple concatenation
-stuff_chain = StuffDocumentsChain(
-    llm_chain=llm_chain,
-    document_variable_name="docs"
+grader = RetrievalGrader(confidence_threshold=0.5)
+kept, report = grader.filter_chunks(
+    question="What's a TPU for in ML infra?",
+    chunks=retrieved_docs,
+    drop_ambiguous=False,
 )
 
-# Refine Chain - Iterative improvement  
-refine_chain = RefineDocumentsChain(
-    initial_llm_chain=initial_chain,
-    refine_llm_chain=refine_chain,
-    document_variable_name="docs",
-    initial_response_name="existing_answer"
+for row in report:
+    print(row["label"], row["confidence"], row["kept"], row["preview"])
+```
+
+**What it filters:** False-positive chunks that score high in vector search but do not help answer the question
+
+**Latency:** Low–Medium (one LLM call per chunk)
+
+**When to use:** Noisy retrieval, mixed-topic corpora, before expensive generation
+
+---
+
+### 2. **Knowledge Refinement**
+
+Removes within-chunk filler while keeping factual content.
+
+**Modes:**
+- **Sentence-level** (default) - judge each sentence, keep relevant ones
+- **Passage-level fallback** - LLM rewrite when sentence filtering is insufficient
+
+**Usage:**
+```python
+from retrieval_playground.src.post_retrieval import KnowledgeRefiner
+
+refiner = KnowledgeRefiner(sentence_level=True)
+tighter_docs = refiner.refine_chunks(question, kept_chunks)
+```
+
+**What it filters:** Tangents, examples, and filler inside otherwise relevant chunks
+
+**Latency:** Medium (one LLM call per sentence in default mode)
+
+**When to use:** Long chunks with mixed relevance; after grading
+
+**Trade-offs:** May drop bridging sentences; can leave dangling references - compare in Tutorial 4
+
+---
+
+### 3. **Context Compression**
+
+Shrinks retained text to query-relevant spans.
+
+**Methods:**
+
+| Method | Mechanism | Cost |
+|--------|-----------|------|
+| `embedding` (default) | Cosine similarity vs query; keep top sentences | Fast, no extra LLM |
+| `abstractive` | LLM summary of passage | Slower, preserves paraphrased facts |
+
+**Usage:**
+```python
+from retrieval_playground.src.post_retrieval import ContextCompressor
+
+compressor = ContextCompressor(similarity_threshold=0.35)
+
+# Per chunk
+compressed_text = compressor.compress_text(
+    question, passage, method="embedding", max_sentences=3
 )
 
-# Map-Rerank Chain - Score and select best
-map_rerank_chain = MapRerankDocumentsChain(
-    llm_chain=llm_chain,
-    rank_key="score",
-    answer_key="answer"
-)
-
-# Map-Reduce Chain - Summarize then combine
-map_reduce_chain = MapReduceDocumentsChain(
-    llm_chain=map_chain,
-    reduce_documents_chain=reduce_chain,
-    document_variable_name="docs"
+# Batch
+compressed_docs = compressor.compress_chunks(
+    question, refined_docs, method="embedding"
 )
 ```
 
-## 🎯 Method Selection Guide
+**What it targets:** Context budget and residual noise after grading/refinement
 
-### When to Use Each Method
+**When to use:** Token limits, long passages, or when you need smaller prompts
 
-| Method | Best For | Document Count | Query Type | Performance |
-|--------|----------|---------------|------------|-------------|
-| **Stuff** | Simple Q&A | Small (1-5) | Direct questions | ⚡ Fastest |
-| **Refine** | Complex analysis | Medium (5-15) | Multi-faceted queries | 🔄 Thorough |
-| **Map-Rerank** | Single best answer | Any | Factual questions | 🎯 Precise |
-| **Map-Reduce** | Synthesis tasks | Large (15+) | Summarization | 📊 Scalable |
+---
 
-### Implementation Approaches
+### 4. **Context Preparation Pipeline**
 
-#### ⚡ **Traditional LangChain**
-- **Pros**: Mature, well-documented, extensive ecosystem
-- **Cons**: Less flexible, harder to customize
-- **Best for**: Standard use cases, rapid prototyping
+Chains all three steps into one call.
 
-#### 🔧 **Modern LangGraph** 
-- **Pros**: Highly customizable, better control flow, modern architecture
-- **Cons**: Newer, smaller ecosystem
-- **Best for**: Complex workflows, custom logic, production systems
+```python
+from retrieval_playground.src.post_retrieval import ContextPreparer
 
-## 🔧 Configuration Options
+preparer = ContextPreparer(
+    run_refinement=True,
+    run_compression=True,
+    compression_method="embedding",  # or "abstractive"
+)
+result = preparer.prepare(question, retrieved_docs)
 
-### Chain Parameters
-- **Temperature**: Control response creativity (0.0-1.0)
-- **Max tokens**: Limit response length
-- **Document separator**: How to join documents (stuff method)
-- **Refinement iterations**: Number of refine steps (refine method)
+print(f"Chunks: {len(retrieved_docs)} → {len(result.chunks)}")
+print(f"Tokens: {result.token_before} → {result.token_after}")
+print(result.grading_report)
+```
 
-### Prompt Templates
-- **Question prompts**: How to frame questions to documents
-- **Refinement prompts**: How to improve existing answers
-- **Scoring prompts**: Criteria for ranking answers (map-rerank)
-- **Summary prompts**: How to summarize individual documents (map-reduce)
+**Returns:** `PreparationResult` with `chunks`, `grading_report`, `token_before`, `token_after`
 
-## 📈 Performance Optimization
+**When to use:** Production-style default — one entry point after retrieval
 
-Post-retrieval processing improves RAG by:
-- **Context utilization** → Optimal document combination strategies
-- **Response quality** → Method-specific answer generation
-- **Scalability** → Handle varying document counts efficiently
-- **Flexibility** → Choose approach based on query complexity
+---
 
-## 🛠️ Advanced Features
+### 5. **Document Assembly**
 
-### Custom Implementations
-- **Hybrid chains**: Combine multiple methods
-- **Conditional routing**: Choose method based on query type
-- **Streaming responses**: Real-time answer generation
-- **Error handling**: Graceful fallbacks for processing failures
+Concatenate prepared chunks and generate a single answer (stuff chain).
 
-### Integration Points
-- **Pre-retrieval**: Works with any chunking strategy
-- **Mid-retrieval**: Compatible with reranked results
-- **Evaluation**: Built-in metrics for chain comparison
+```python
+from retrieval_playground.src.post_retrieval import document_assembly
+
+answer = document_assembly.generate_answer(question, result.chunks)
+```
+
+**Pattern:** Standard production RAG — one prompt, all context stuffed in
+
+**When to use:** After context preparation; baseline for Tutorial 4 A/B comparison
+
+**Note:** Older multi-pass strategies (refine, map-reduce, map-rerank) addressed context limits that rarely bind with modern models — this workshop uses stuff-only.
+
+---
+
+## 💡 Typical Workflow
+
+```python
+from retrieval_playground.src.baseline_rag import RAG
+from retrieval_playground.src.post_retrieval import ContextPreparer
+from retrieval_playground.src.post_retrieval import document_assembly
+
+rag = RAG(strategy="recursive_character")
+preparer = ContextPreparer()
+
+question = "What's a TPU for in modern ML infra?"
+
+# 1. Retrieve (Tutorial 2)
+retrieved = [doc for doc, _ in rag.retrieve_context(question, k=3)]
+
+# 2. Prepare context (grade → refine → compress)
+prepared = preparer.prepare(question, retrieved)
+
+# 3. Generate
+answer = document_assembly.generate_answer(question, prepared.chunks)
+
+print(f"Tokens: {prepared.token_before} → {prepared.token_after}")
+print(answer)
+```
+
+**Optional: step-by-step inspection**
+```python
+from retrieval_playground.src.post_retrieval import (
+    RetrievalGrader,
+    KnowledgeRefiner,
+    ContextCompressor,
+)
+
+graded, report = RetrievalGrader().filter_chunks(question, retrieved)
+refined = KnowledgeRefiner().refine_chunks(question, graded)
+compressed = ContextCompressor().compress_chunks(question, refined)
+```
+
+---
+
+## 📊 Technique Comparison
+
+| Technique | Primary target | Latency | LLM calls | Best for |
+|-----------|----------------|---------|-----------|----------|
+| **Retrieval Grading** | Wrong chunks | Low-Medium | 1 × chunks | False positives from retrieval |
+| **Knowledge Refinement** | Within-chunk noise | Medium | 1 × sentences | Long, mixed passages |
+| **Compression (embedding)** | Length + noise | Fast | 0 | Token budget, quick wins |
+| **Compression (abstractive)** | Length + paraphrase | Medium | 1 × chunks | Dense factual summaries |
+| **ContextPreparer** | Full pipeline | Medium–High | Combined | Production default |
+| **Document Assembly** | Final answer | Medium | 1 × generation | After all prep steps |
+
+---
+
+## 📈 Measuring Impact
+
+Post-retrieval changes should be validated in **Tutorial 4**, not only by token counts:
+
+| Signal | Where to check |
+|--------|----------------|
+| Fewer irrelevant chunks | `grading_report` in notebook 3 |
+| Lower token count | `token_before` / `token_after` |
+| Better context quality | RAGAS `context_precision`, `context_recall` |
+| Better answers | `faithfulness`, `answer_accuracy` |
+| Side effects | `answer_length_ratio`, manual answer review |
+
+**Canonical A/B:** baseline retrieve → generate vs prepare → generate (see `4_Evaluation.ipynb`)
+
+---
+
+## 🔧 Configuration
+
+All components use shared models from `utils/config.py`:
+
+```python
+from retrieval_playground.utils import config
+
+config.MODEL_NAME           # Gemini for grading, refinement, abstractive compression
+config.EMBEDDING_MODEL_NAME # Gemini embeddings for extractive compression
+```
+
+**Environment (`.env`):**
+```bash
+GOOGLE_API_KEY=your_gemini_key
+QDRANT_URL=your_qdrant_url
+QDRANT_KEY=your_qdrant_key
+```
+
+**Tunable parameters:**
+
+| Component | Parameter | Default | Effect |
+|-----------|-----------|---------|--------|
+| `RetrievalGrader` | `confidence_threshold` | 0.5 | Drop low-confidence relevant labels |
+| `ContextCompressor` | `similarity_threshold` | 0.35 | Sentence keep threshold (embedding mode) |
+| `ContextPreparer` | `compression_method` | `"embedding"` | `"embedding"` or `"abstractive"` |
+| `ContextPreparer` | `run_refinement` | `True` | Skip refinement step if `False` |
+
+---
+
+## ⚠️ Production Considerations
+
+1. **Grading drops all context** - if every chunk is irrelevant, generation has nothing to use; add a fallback policy (e.g. keep top-1 anyway).
+2. **Refinement coherence** - sentence-level filtering can break flow; review answers manually on a sample.
+3. **Compression assumptions** - embedding mode is extractive (keeps original sentences); abstractive mode may paraphrase.
+4. **Latency stacks** - full pipeline runs multiple LLM calls; use embedding compression for workshops, abstractive selectively in production.
+5. **Agent integration (Tutorial 5)** - optional: run `ContextPreparer` *inside* the retrieval tool before returning chunks to the agent.
+
+---
+
+**Ready to start?**
+1. ✅ Confirm retrieval works (Tutorial 2) and `.env` has `GOOGLE_API_KEY`
+2. 📓 Open `tutorial/3_Post_Retrieval.ipynb`
+3. 🚀 Run the context preparation pipeline and inspect the grading report!
+
+---

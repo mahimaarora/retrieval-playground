@@ -24,12 +24,12 @@ class AppSettings(BaseSettings):
     )
 
     model_name: str = Field(
-        default="gemini-2.5-pro",
+        default="gemini-3.1-flash-lite",
         description="LLM model name"
     )
 
     embedding_model_name: str = Field(
-        default="models/gemini-embedding-001",
+        default="models/gemini-embedding-2",
         description="Embedding model name"
     )
 

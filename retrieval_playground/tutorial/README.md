@@ -1,265 +1,287 @@
-# 📚 Interactive Tutorial Notebooks
+# 📚 RAG Optimization Tutorial
 
-Welcome to the RAG optimization tutorial! These notebooks teach you pre-retrieval techniques through hands-on experimentation.
-
-## 🎯 Learning Path
-
-### Start Here: Prerequisites
-- ✅ Basic Python knowledge
-- ✅ Familiarity with RAG concepts (optional but helpful)
-- ✅ ~45 minutes total time
-
-### Notebooks (Complete in Order)
-
-#### 1️⃣ Document Chunking (`1A_Pre_Chunking_Methods.ipynb`)
-**Time:** ~20 minutes | **Difficulty:** 🟢 Beginner
-
-Learn how to split documents for better retrieval:
-- 🟢 **Recursive** - Simple & effective (your default)
-- 🟡 **Contextual** - Adds LLM-powered context
-- 🟠 **Parent-Child** - Precision + context
-- 🔴 **Docling** - Handles tables & images
-
-**What You'll Build:**
-- Chunk a research paper 4 different ways
-- Compare results side-by-side
-- Learn when to use each method
-
-**Key Takeaway:** Start with Recursive, upgrade only when needed!
+Welcome! This tutorial teaches you how to build high-quality RAG systems through hands-on interactive notebooks covering pre-retrieval, mid-retrieval, and post-retrieval techniques.
 
 ---
 
-#### 2️⃣ Query Optimization (`1B_Pre_Query_Methods.ipynb`)
-**Time:** ~25 minutes | **Difficulty:** 🟢 Beginner → 🟡 Intermediate
+## 📖 What You'll Learn
 
-Transform messy queries into perfect searches:
+This tutorial contains **7 interactive notebooks** covering the complete RAG optimization pipeline:
 
-**Part 1 - Basic Transforms** (🟢)
-- Expansion - Fix abbreviations
-- Decomposition - Split multi-questions
-- Rewriting - Add context
+**Pre-Retrieval** (Notebooks 1A & 1B)
 
-**Part 2 - Advanced Techniques** (🟡)
-- Multi-Query RAG Fusion (+15-19% quality!)
-- Step-Back Prompting
-- Complexity Classification
-- Reciprocal Rank Fusion
+- Optimize documents before indexing (chunking strategies)
+- Transform queries before searching (expansion, routing, complexity analysis)
 
-**Part 3 - Smart Routing** (🟠)
-- 6 route types
-- Tool selection (vector_db, sql, web)
-- Full pipeline integration
+**Mid-Retrieval** (Notebooks 2A & 2B)
 
-**What You'll Build:**
-- Optimize real queries
-- See before/after comparisons
-- Understand automatic strategy selection
+- Advanced search techniques (dense, hybrid, reranking, parent-child)
+- Intelligent method selection (routing, adaptive retrieval, multi-query)
 
-**Key Takeaway:** Use `optimize_query_for_retrieval()` and let the system decide!
+**Post-Retrieval** (Notebook 3)
+
+- Result filtering and reranking
+- Context compression and deduplication
+
+**Evaluation & Advanced** (Notebooks 4 & 5)
+
+- Measure and compare retrieval quality
+- Build intelligent agentic RAG systems
 
 ---
 
-## 🚀 Quick Start
 
-### Setup
 
-1. **Clone the repo:**
+## 🎯 Prerequisites
+
+
+
+### Required Credentials
+
+**1. Qdrant (Vector Database)**
+
+- **Recommended:** Use credentials provided by instructors - collections are already ingested and ready to use
+- **Alternative:** Set up your own Qdrant instance (see Setup section below)
+
+**2. Gemini API (for LLM-powered features)**
+
+- Get your API key from: [Google AI Studio](https://aistudio.google.com/app/apikey)
+- Used for query generation, contextual chunking, and expansion
+
+
+
+### Environment Setup
+
+Create a `.env` file in the project root:
+
 ```bash
+# Qdrant (use instructor-provided credentials or your own)
+QDRANT_URL=your_qdrant_url
+QDRANT_KEY=your_qdrant_api_key
+
+# Gemini (required)
+GOOGLE_API_KEY=your_gemini_api_key
+```
+
+---
+
+
+
+## 🚀 How to Start
+
+
+
+### Option 1: Using Docker (Recommended)
+
+```bash
+# Build and start the container
+docker-compose up --build
+
+# Access Jupyter at http://localhost:8888
+# Token will be shown in terminal output
+```
+
+See `retrieval_playground/SETUP.md` for detailed Docker setup instructions.
+
+### Option 2: Local Setup (Non-Docker)
+
+```bash
+# 1. Clone repository
 git clone https://github.com/mahimaarora/retrieval-playground.git
 cd retrieval-playground
-```
 
-2. **Install dependencies:**
-```bash
+# 2. Install dependencies
 pip install -r requirements.txt
-```
 
-3. **Set environment variables:**
-```bash
-# Create .env file
-GOOGLE_API_KEY=your_gemini_api_key
-QDRANT_URL=your_qdrant_url
-QDRANT_KEY=your_qdrant_key
-```
+# 3. Create .env file (see Environment Setup above)
 
-4. **Download sample data:**
-- Go to: [Research Papers Dataset](https://huggingface.co/datasets/mahimaarora025/research_papers/tree/main/sample_research_papers)
-- Download any PDF (we recommend `cot_paper.pdf`)
-- Save to: `retrieval_playground/data/sample_research_papers/`
-
-5. **Launch Jupyter:**
-```bash
+# 4. Launch Jupyter
 jupyter notebook retrieval_playground/tutorial/
 ```
 
----
-
-## 📊 What Makes These Notebooks Different?
-
-### ✅ Beginner-Friendly Features
-
-1. **Progressive Complexity**
-   - 🟢 Green = Start here (simple)
-   - 🟡 Yellow = Intermediate
-   - 🟠 Orange = Advanced
-   - 🔴 Red = Expert
-
-2. **Visual Learning**
-   - Diagrams before code
-   - Before/after comparisons
-   - Clear color coding
-
-3. **Hands-On Experiments**
-   - "Try It Yourself" sections
-   - Interactive code cells
-   - Immediate feedback
-
-4. **Clear Use Cases**
-   - "When to use" for each method
-   - Real-world scenarios
-   - Decision trees
-
-5. **No Overwhelm**
-   - No cell > 20 lines of code
-   - One concept at a time
-   - Can complete in < 30 mins each
+See `retrieval_playground/SETUP.md` for detailed local setup instructions.
 
 ---
+
+
+
+## 📓 Notebook Sequence
+
+Follow this order for the best learning experience:
+
+### Pre-Retrieval (Document & Query Optimization)
+
+**1A. Pre-Chunking Methods** 🟢
+
+- Learn 4 chunking strategies: Recursive, Contextual, Parent-Child, Docling
+- Understand trade-offs between speed, quality, and storage
+- See side-by-side comparisons on real documents
+- **Key Takeaway:** Start with Recursive, upgrade when needed
+
+**1B. Pre-Query Methods** 🟢→🟡
+
+- Query expansion, decomposition, and rewriting
+- Advanced techniques: Multi-query RAG fusion, step-back prompting
+- Semantic routing and complexity classification
+- **Key Takeaway:** Use `optimize_query_for_retrieval()` for automatic optimization
+
+
+
+### Mid-Retrieval (Advanced Search Techniques)
+
+**2A. Basic Mid-Retrieval Methods**  🟡
+
+- Dense search (semantic similarity)
+- Hybrid search (BM25 + Dense with RRF fusion)
+- Reranking (two-stage retrieval with cross-encoder)
+- Parent-Child (adaptive hierarchical retrieval)
+- **Key Takeaway:** Hybrid + Reranking for production quality
+
+**2B. Advanced Mid-Retrieval Methods**🟡→🟠
+
+- Multi-Query Hybrid (4-stage pipeline)
+- Query Routing (intent-based method selection)
+- Adaptive Retrieval (complexity-based optimization)
+- **Key Takeaway:** Adaptive retrieval for automatic method selection
+
+
+
+### Post-Retrieval (Result Optimization)
+
+**3. Post-Retrieval Processing**  🟡
+
+- Result filtering and deduplication
+- Context compression techniques
+- Final reranking and selection strategies
+- **Key Takeaway:** Optimize retrieved results before sending to LLM
+
+
+
+### Evaluation & Advanced Patterns
+
+**4. RAG Evaluation** 🟠
+
+- Measure retrieval quality (precision, recall, MRR)
+- Evaluate end-to-end RAG performance
+- Compare different retrieval strategies
+- **Key Takeaway:** Measure what matters to guide optimization decisions
+
+**5. Agentic RAG**  🟠→🔴
+
+- Build intelligent RAG agents with LangGraph
+- Implement adaptive retrieval workflows
+- Create self-correcting RAG systems
+- **Key Takeaway:** Combine RAG with agent patterns for complex tasks
+
+---
+
+
+
+## 💡 What to Expect
+
+
+
+### Hands-On Learning
+
+- **Visual diagrams** explain concepts before code
+- **Interactive cells** let you experiment immediately
+- **Before/after comparisons** show real improvements
+- **Clear metrics** demonstrate quality gains
+
+
+
+### Progressive Difficulty
+
+- 🟢 **Basic:** Start here if you're new to RAG
+- 🟡 **Intermediate:** Build on foundational knowledge
+- 🟠 **Advanced:** Production-ready techniques
+
+
+
+### Realistic Examples
+
+- Real research papers and queries
+- Actual performance metrics (+15-35% quality improvements)
+- Production-ready code patterns
+
+---
+
+
+
+## 🔧 Using Pre-Ingested Collections
+
+**If using instructor-provided Qdrant credentials:**
+
+- Collections are ready: `recursive_character`, `hybrid`, `parent_child`
+- Skip ingestion steps in notebooks - start querying immediately
+- All examples will work out of the box
+
+**If creating your own collections:**
+
+- Follow collection setup instructions in notebooks
+- Run ingestion cells before retrieval examples
+- Refer to `src/mid_retrieval/MID_RETRIEVAL.md` for detailed setup
+
+---
+
+
 
 ## 🎓 Learning Outcomes
 
-After completing both notebooks, you'll be able to:
+After completing the tutorials, you will:
 
-### Chunking Skills
-✅ Choose the right chunking strategy for your use case
-✅ Understand trade-offs (speed vs quality)
-✅ Implement any of the 4 strategies in < 5 minutes
-✅ Know when to use multimodal chunking
-
-### Query Optimization Skills
-✅ Fix common query problems automatically
-✅ Use RAG Fusion for +15-19% quality improvement
-✅ Route queries to appropriate handlers
-✅ Combine multiple techniques effectively
-
-### Integration Skills
-✅ Build complete RAG pipelines
-✅ Make informed optimization decisions
-✅ Measure and compare results
-✅ Avoid common pitfalls
+✅ **Understand** all stages of RAG optimization (pre, mid, post)
+✅ **Choose** the right techniques for your use case
+✅ **Implement** production-quality retrieval systems
+✅ **Measure** and compare retrieval quality
+✅ **Optimize** for speed, quality, and cost trade-offs
+✅ **Build** end-to-end RAG pipelines with confidence
 
 ---
+
+
 
 ## 🆘 Troubleshooting
 
-### Common Issues
+**Collection not found:**
 
-**"Collection not found" error:**
-```python
-# Make sure you ran the chunking cell first
-manager.create_chunks(...)  # This creates the collection
-```
+- Using instructor credentials? Make sure you copied them correctly to `.env`
+- Creating your own? Run the ingestion cells in the notebooks first
 
-**"API key not found":**
-```python
-# Check your .env file exists and has correct keys
-GOOGLE_API_KEY=your_key_here
-```
+**API key errors:**
 
-**"Module not found":**
+- Check `.env` file exists in project root (not in `/tutorial`)
+- Verify keys are correct (no extra spaces or quotes)
+- For Gemini: Ensure API key is active at [Google AI Studio](https://aistudio.google.com)
+
+**Module not found:**
+
 ```bash
-# Reinstall dependencies
 pip install -r requirements.txt
 ```
 
-**Slow processing:**
-- 🟢 Recursive: ~10 seconds
-- 🟡 Contextual: ~30 seconds (LLM calls)
-- 🟠 Parent-Child: ~15 seconds
-- 🔴 Docling: ~2-3 minutes (multimodal extraction)
+**Docker issues:**
 
----
-
-## 📈 Performance Expectations
-
-### Chunking Impact
-| Strategy | Speed | Quality | Storage | Best For |
-|----------|-------|---------|---------|----------|
-| 🟢 Recursive | ⚡⚡⚡ | ⭐⭐ | Low | Standard docs |
-| 🟡 Contextual | ⚡⚡ | ⭐⭐⭐ | Medium | Technical docs |
-| 🟠 Parent-Child | ⚡⚡ | ⭐⭐⭐⭐ | High | Production |
-| 🔴 Docling | ⚡ | ⭐⭐⭐⭐ | Medium | Tables/Images |
-
-### Query Optimization Impact
-| Technique | Improvement | Cost | Best For |
-|-----------|-------------|------|----------|
-| Expansion | +10-15% | Low | Vague queries |
-| Decomposition | +15-20% | Low | Multi-questions |
-| Rewriting | +20-25% | Low | Follow-ups |
-| Multi-Query | +15-19% | Medium | Important queries |
-| Step-Back | +10-15% | Low | Technical queries |
-| Full Pipeline | +25-35% | Medium | Production |
-
----
-
-## 🎯 Next Steps
-
-After completing the tutorials:
-
-1. **Experiment with your data**
-   - Upload your own documents
-   - Test with real queries
-   - Measure improvements
-
-2. **Build a complete RAG system**
-   - Combine chunking + query optimization
-   - Add evaluation metrics
-   - Deploy to production
-
-3. **Advanced topics** (Future notebooks)
-   - Evaluation frameworks
-   - Hyperparameter tuning
-   - Custom optimizations
-
----
-
-## 💡 Pro Tips
-
-### For Chunking
-- 🚀 **Start simple:** Use Recursive for first iteration
-- 📊 **Measure first:** Baseline before optimizing
-- 💰 **Consider costs:** LLM calls add up
-- 🎯 **Optimize selectively:** Not every doc needs advanced chunking
-
-### For Query Optimization
-- 🤖 **Use auto-optimization:** `optimize_query_for_retrieval()`
-- 🔄 **Combine techniques:** Multi-query + routing + fusion
-- 📈 **Track metrics:** Measure improvement over baseline
-- ⚡ **Balance speed vs quality:** Not every query needs everything
-
-### General
-- 📚 **Read code comments:** They explain why, not just what
-- 🧪 **Experiment freely:** Notebooks are safe to modify
-- 🔍 **Compare results:** Side-by-side is most instructive
-- 💬 **Ask questions:** Use GitHub Issues
+- See `retrieval_playground/SETUP.md` Docker troubleshooting section
+- Check logs: `docker-compose logs -f`
 
 ---
 
 ## 📚 Additional Resources
 
-- **Documentation:** `retrieval_playground/src/pre_retrieval/`
-- **Tests:** `retrieval_playground/tests/`
-- **Implementation Details:** See source code for advanced usage
-- **Research Papers:** Citations in `PRE_RETRIEVAL_ANALYSIS.md`
+- **Setup Guide:** `retrieval_playground/SETUP.md`
+- **Mid-Retrieval Docs:** `src/mid_retrieval/MID_RETRIEVAL.md`
+- **Pre-Retrieval Docs:** `src/pre_retrieval/PRE_RETRIEVAL.md`
+- **Source Code:** `retrieval_playground/src/`
+- **GitHub Issues:** For questions and support
 
 ---
 
-## 🎉 Ready to Learn?
 
-**Start with:** `1A_Pre_Chunking_Methods.ipynb`
 
-**Time commitment:** ~45 minutes total  
-**Prerequisites:** Basic Python  
-**Outcome:** Build optimized RAG systems with confidence!
+## 🎉 Ready to Start?
+
+  
+**Outcome:** Build production-ready RAG systems with confidence!
 
 Happy learning! 🚀

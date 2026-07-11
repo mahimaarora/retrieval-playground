@@ -7,6 +7,21 @@ echo # Retrieval Playground - Docker Workshop Setup   #
 echo ####################################################
 echo.
 
+REM Prefer Docker Compose V2 (`docker compose`); fall back to legacy `docker-compose`
+docker compose version >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+    set "COMPOSE=docker compose"
+) else (
+    where docker-compose >nul 2>nul
+    if %ERRORLEVEL% NEQ 0 (
+        echo [ERROR] Docker Compose is not installed!
+        echo Install Docker Desktop: https://docs.docker.com/desktop/install/windows-install/
+        pause
+        exit /b 1
+    )
+    set "COMPOSE=docker-compose"
+)
+
 REM Check if Docker is installed
 where docker >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
@@ -65,14 +80,14 @@ if not exist .env (
 
 echo Building Docker image (this may take 5-10 minutes on first run)...
 echo.
-docker-compose build
+%COMPOSE% build
 
 echo.
 echo [OK] Build complete!
 echo.
 echo Starting Jupyter Notebook server...
 echo.
-docker-compose up -d
+%COMPOSE% up -d
 
 echo.
 echo [OK] Jupyter Notebook is running!
@@ -87,8 +102,8 @@ echo.
 echo Navigate to: retrieval_playground/tutorial/
 echo.
 echo Useful commands:
-echo   Stop:     docker-compose down
-echo   Restart:  docker-compose restart
-echo   Logs:     docker-compose logs -f
+echo   Stop:     %COMPOSE% down
+echo   Restart:  %COMPOSE% restart
+echo   Logs:     %COMPOSE% logs -f
 echo.
 pause

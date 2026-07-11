@@ -36,7 +36,7 @@ class RAG:
             self.qdrant_path = None
             self.qdrant_client = QdrantClient(url=config.QDRANT_URL, api_key=config.QDRANT_KEY)
         else:   
-            self.qdrant_path = config.QDRANT_DIR / self.strategy.value
+            self.qdrant_path = config.QDRANT_DIR / self.strategy
             self.qdrant_client = QdrantClient(path=str(self.qdrant_path))
 
         # Define RAG prompt template
@@ -66,14 +66,14 @@ Answer:"""
             List of relevant Document objects
         """
         if collection_name is None:
-            collection_name = self.strategy.value
+            collection_name = self.strategy
         vector_store = QdrantVectorStore(
             client=self.qdrant_client,
             collection_name=collection_name,
             embedding=self.embeddings,
             distance=Distance.COSINE 
         )
-        results = vector_store.similarity_search_with_relevance_scores(query, k=3)
+        results = vector_store.similarity_search_with_relevance_scores(query, k=k)
         return results
     
     def generate_answer(self, query: str, context_docs: List[Document]) -> str:
@@ -116,7 +116,7 @@ Answer:"""
             Dictionary containing answer, context, and metadata
         """
         if collection_name is None:
-            collection_name = self.strategy.value
+            collection_name = self.strategy
         
         # Retrieve relevant context
         context_docs_with_score = self.retrieve_context(question, k=k, collection_name=collection_name)

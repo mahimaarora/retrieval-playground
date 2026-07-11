@@ -11,7 +11,7 @@ Combines:
 from typing import List
 from langchain_core.documents import Document
 
-from retrieval_playground.src.pre_retrieval.query_rephrasing import expand_query
+from retrieval_playground.src.pre_retrieval.query_rephrasing import expand_query, reciprocal_rank_fusion
 from retrieval_playground.src.mid_retrieval.hybrid_search import HybridRetriever
 from retrieval_playground.src.mid_retrieval.reranking import Reranker
 
@@ -95,29 +95,10 @@ class MultiQueryHybrid:
             all_results.append(hybrid_results)
 
         # Stage 3: RRF fusion across all variants
-        fused_scores = {}
-        doc_map = {}
+        merged = reciprocal_rank_fusion(all_results, k=60)
 
-        for results in all_results:
-            for rank, doc in enumerate(results):
-                doc_id = hash(doc.page_content)
-
-                if doc_id not in fused_scores:
-                    fused_scores[doc_id] = 0
-                    doc_map[doc_id] = doc
-
-                # RRF: 1 / (k + rank)
-                fused_scores[doc_id] += 1 / (60 + rank)
-
-        # Sort by RRF score
-        ranked_ids = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
-
-        # Top candidates for reranking
-        merged = []
-        for doc_id, rrf_score in ranked_ids[:candidate_pool]:
-            doc = doc_map[doc_id]
-            doc.metadata['rrf_score'] = float(rrf_score)
-            merged.append(doc)
+        # Limit to candidate pool for reranking
+        merged = merged[:candidate_pool]
 
         if not merged:
             return []
@@ -151,18 +132,7 @@ class MultiQueryHybrid:
             multi_results.append(results)
 
         # RRF across variants
-        fused_scores = {}
-        doc_map = {}
-        for results in multi_results:
-            for rank, doc in enumerate(results):
-                doc_id = hash(doc.page_content)
-                if doc_id not in fused_scores:
-                    fused_scores[doc_id] = 0
-                    doc_map[doc_id] = doc
-                fused_scores[doc_id] += 1 / (60 + rank)
-
-        ranked_ids = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
-        multi_query = [doc_map[doc_id] for doc_id, _ in ranked_ids[:k]]
+        multi_query = reciprocal_rank_fusion(multi_results, k=60)[:k]
 
         # Full pipeline (multi-query + hybrid + reranking)
         full_pipeline = self.search(query, k=k)

@@ -326,7 +326,7 @@ from retrieval_playground.utils.query_classifier import classify_query_complexit
 # RECIPROCAL RANK FUSION (For Multi-Query Results)
 # ============================================================================
 
-def reciprocal_rank_fusion(results_list: list[list[dict]], k: int = 60) -> list[dict]:
+def reciprocal_rank_fusion(results_list: list[list], k: int = 60) -> list:
     """
     Merge multiple ranked result lists using Reciprocal Rank Fusion.
 
@@ -334,7 +334,7 @@ def reciprocal_rank_fusion(results_list: list[list[dict]], k: int = 60) -> list[
     where k is a constant (typically 60)
 
     Args:
-        results_list: List of result lists, each containing dicts with 'chunk_id' or 'id'
+        results_list: List of result lists (dicts or Langchain Documents)
         k: RRF constant (default 60)
 
     Returns:
@@ -347,13 +347,20 @@ def reciprocal_rank_fusion(results_list: list[list[dict]], k: int = 60) -> list[
         >>> fused[0]["chunk_id"]
         "doc2"  # Appears in both lists, ranked first
     """
+    from langchain_core.documents import Document
+
     fused_scores = {}
     doc_map = {}
 
     for results in results_list:
         for rank, doc in enumerate(results):
-            # Get document ID
-            doc_id = doc.get("chunk_id") or doc.get("id") or str(doc)
+            # Handle both dict and Document objects
+            if isinstance(doc, Document):
+                doc_id = doc.metadata.get("chunk_id") or doc.metadata.get("id") or id(doc)
+            elif isinstance(doc, dict):
+                doc_id = doc.get("chunk_id") or doc.get("id") or str(doc)
+            else:
+                doc_id = str(doc)
 
             # Track fused score
             if doc_id not in fused_scores:
@@ -448,96 +455,3 @@ def optimize_query_for_retrieval(
     }
 
 
-# ============================================================================
-# DEMO & EXAMPLES
-# ============================================================================
-
-def demo_query_rephrasing():
-    """
-    Demonstrate all query rephrasing techniques with workshop dataset examples.
-    """
-    print("=" * 80)
-    print("QUERY REPHRASING DEMO - SciPy Workshop Dataset")
-    print("=" * 80)
-
-    # 1. Single Query Expansion
-    print("\n🔍 1. SINGLE QUERY EXPANSION")
-    print("-" * 50)
-    query = "What is AL?"
-    print(f"Original: {query}")
-    result = expand_query(query, num_variants=1)
-    print(f"Expanded: {result[0]}")
-
-    # 2. Multi-Query Generation (RAG Fusion)
-    print("\n🔍 2. MULTI-QUERY GENERATION (RAG Fusion)")
-    print("-" * 50)
-    query = "How do quantum graph neural networks improve molecular property prediction?"
-    print(f"Original: {query}")
-    variants = expand_query(query, num_variants=3)
-    print("Variants:")
-    for i, v in enumerate(variants, 1):
-        print(f"  {i}. {v}")
-
-    # 3. Query Decomposition
-    print("\n📋 3. QUERY DECOMPOSITION")
-    print("-" * 50)
-    query = "What is AutoClimDS and how does it help with climate data analysis?"
-    print(f"Original: {query}")
-    sub_queries = decompose_query(query)
-    print("Sub-queries:")
-    for i, sq in enumerate(sub_queries, 1):
-        print(f"  {i}. {sq}")
-
-    # 4. Step-Back Prompting
-    print("\n🔙 4. STEP-BACK PROMPTING")
-    print("-" * 50)
-    query = "What specific CUDA optimization techniques improve GPU performance in transformer models?"
-    print(f"Specific: {query}")
-    broader, _ = step_back_query(query)
-    print(f"Broader: {broader}")
-
-    # 5. Complexity Classification
-    print("\n📊 5. COMPLEXITY CLASSIFICATION")
-    print("-" * 50)
-    queries = [
-        "What is Agent Laboratory?",
-        "Compare the differences between PyTorch and JAX frameworks and explain which is better for scientific computing",
-        "Explain how quantum graph neural networks improve molecular property prediction and why they outperform classical graph neural networks"
-    ]
-    for query in queries:
-        result = classify_query_complexity(query)
-        print(f"Query: {query}")
-        print(f"  Complexity: {result['complexity']} (score: {result['score']})")
-        print(f"  Strategy: {result['recommended_strategy']}")
-        print()
-
-    # 6. Full Orchestration
-    print("\n🎯 6. FULL ORCHESTRATION")
-    print("-" * 50)
-    query = "Compare the performance differences between Pandas, Polars, and Dask dataframe libraries and explain which is best for large-scale scientific data processing"
-    print(f"Query: {query}")
-    result = optimize_query_for_retrieval(query)
-    print(f"Strategy: {result['strategy']}")
-    print(f"Complexity: {result['complexity']['complexity']}")
-    print(f"Signals: {result['complexity']['signals']}")
-    print(f"Processed Queries ({result['metadata']['num_queries']}):")
-    for i, pq in enumerate(result['processed_queries'], 1):
-        print(f"  {i}. {pq}")
-
-    # 7. Context-Aware Rewriting
-    print("\n📝 7. CONTEXT-AWARE REWRITING")
-    print("-" * 50)
-    previous_context = "We were discussing AI agents for scientific research and their ability to automate experiments."
-    query = "How effective are they in practice?"
-    print(f"Context: {previous_context}")
-    print(f"Original: {query}")
-    rewritten = rewrite_query(query, previous_context)
-    print(f"Rewritten: {rewritten}")
-
-    print("\n" + "=" * 80)
-    print("DEMO COMPLETE")
-    print("=" * 80)
-
-
-if __name__ == "__main__":
-    demo_query_rephrasing()

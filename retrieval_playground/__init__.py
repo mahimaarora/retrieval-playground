@@ -3,6 +3,9 @@
 import os
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
+# RAGAS imports a removed langchain_community Vertex AI path at import time.
+import retrieval_playground.utils.ragas_compat  # noqa: F401
+
 __version__ = "0.1.0"
 
 from .utils.model_manager import ModelManager, model_manager

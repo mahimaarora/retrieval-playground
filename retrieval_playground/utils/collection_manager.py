@@ -4,12 +4,14 @@ Collection Manager - Unified Qdrant collection management
 Handles all Qdrant operations:
 - Creating collections (regular and hybrid)
 - Overwriting existing collections
-- Adding documents to collections
+- Document ingestion for all chunking strategies
 """
 
 from pathlib import Path
+from typing import List
 from qdrant_client import QdrantClient, models
 from langchain_qdrant import QdrantVectorStore
+from langchain_core.documents import Document
 
 from retrieval_playground.utils import config
 from retrieval_playground.utils.pylogger import get_python_logger
@@ -279,6 +281,130 @@ class CollectionManager:
             qdrant_path = config.QDRANT_DIR / collection_name
             return qdrant_path.exists() and any(qdrant_path.iterdir())
 
+    def ingest_documents(
+        self,
+        pdf_directory: str,
+        strategy: str = "recursive",
+        use_cloud: bool = False,
+        overwrite: bool = False
+    ) -> None:
+        """
+        Ingest documents using specified chunking strategy.
+
+        Args:
+            pdf_directory: Path to directory containing PDF files
+            strategy: One of: recursive, docling, parent_child, contextual, hybrid, all
+            use_cloud: Use cloud Qdrant (True) or local (False)
+            overwrite: Delete existing collection and create new one
+        """
+        if strategy == "all":
+            import time
+            strategies = ["recursive", "contextual", "parent_child", "hybrid", "docling"]
+            self.logger.info(f"\n{'='*70}")
+            self.logger.info(f"Ingesting documents with ALL strategies")
+            self.logger.info(f"{'='*70}\n")
+
+            total_start = time.time()
+            strategy_times = {}
+
+            for idx, strat in enumerate(strategies, 1):
+                self.logger.info(f"\n[{idx}/{len(strategies)}] {strat.upper()}")
+                start_time = time.time()
+
+                self.ingest_documents(pdf_directory, strat, use_cloud, overwrite)
+
+                elapsed = time.time() - start_time
+                strategy_times[strat] = elapsed
+                self.logger.info(f"   ⏱️  {strat} completed in {elapsed:.2f}s ({elapsed/60:.2f} min)")
+
+            total_elapsed = time.time() - total_start
+
+            self.logger.info(f"\n{'='*70}")
+            self.logger.info(f"✅ All {len(strategies)} strategies completed!")
+            self.logger.info(f"{'='*70}")
+            self.logger.info(f"\n⏱️  TIMING SUMMARY:")
+            for strat, elapsed in strategy_times.items():
+                self.logger.info(f"   {strat:15s}: {elapsed:7.2f}s ({elapsed/60:5.2f} min)")
+            self.logger.info(f"   {'─'*35}")
+            self.logger.info(f"   {'TOTAL':15s}: {total_elapsed:7.2f}s ({total_elapsed/60:5.2f} min)")
+            self.logger.info(f"{'='*70}\n")
+            return
+
+        if strategy == "hybrid":
+            self.logger.info(f"\n{'='*70}")
+            self.logger.info(f"Creating hybrid collection from recursive_character")
+            self.logger.info(f"{'='*70}\n")
+
+            self.create_hybrid_from_existing(
+                source_collection="recursive_character",
+                target_collection="hybrid",
+                use_cloud=use_cloud,
+                overwrite=overwrite
+            )
+            return
+
+        from retrieval_playground.src.pre_retrieval.chunking.recursive_chunking import RecursiveChunking
+        from retrieval_playground.src.pre_retrieval.chunking.docling_chunking import DoclingChunking
+        from retrieval_playground.src.pre_retrieval.chunking.parent_child_chunking import ParentChildChunking
+        from retrieval_playground.src.pre_retrieval.chunking.contextual_chunking import ContextualChunking
+
+        strategy_map = {
+            "recursive": ("recursive_character", RecursiveChunking()),
+            "docling": ("docling", DoclingChunking()),
+            "parent_child": ("parent_child", ParentChildChunking()),
+            "contextual": ("contextual", ContextualChunking()),
+        }
+
+        if strategy not in strategy_map:
+            raise ValueError(
+                f"Unknown strategy: {strategy}. "
+                f"Choose from: recursive, docling, parent_child, contextual, hybrid, all"
+            )
+
+        collection_name, chunking_strategy = strategy_map[strategy]
+
+        self.logger.info(f"\n{'='*70}")
+        self.logger.info(f"Ingesting documents with: {strategy}")
+        self.logger.info(f"{'='*70}\n")
+
+        if overwrite and strategy == "docling":
+            import shutil
+            if config.DOCLING_IMAGES_DIR.exists():
+                self.logger.info(f"Clearing images from {config.DOCLING_IMAGES_DIR}")
+                shutil.rmtree(config.DOCLING_IMAGES_DIR)
+                config.DOCLING_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
+        qdrant_client = self.create_collection(
+            collection_name=collection_name,
+            use_cloud=use_cloud,
+            overwrite=overwrite,
+            enable_hybrid=False
+        )
+
+        vector_store = self.get_vector_store(
+            collection_name=collection_name,
+            use_cloud=use_cloud
+        )
+
+        import time
+        start_time = time.time()
+
+        chunks = chunking_strategy.chunk_pdf_directory(pdf_directory)
+
+        self.logger.info(f"\n📤 Uploading {len(chunks)} chunks to Qdrant...")
+        vector_store.add_documents(chunks)
+        self.logger.info(f"    ✓ Upload complete")
+
+        elapsed_time = time.time() - start_time
+        self.logger.info(f"\nTotal time: {elapsed_time:.2f} seconds")
+
+        qdrant_client.close()
+        del qdrant_client
+        del vector_store
+        del chunks
+
+        self.logger.info(f"✅ Completed: {strategy}\n")
+
 
 # Standalone functions for convenience
 def create_collection(
@@ -328,3 +454,33 @@ def create_hybrid_collection(
 
     manager = CollectionManager(embeddings)
     manager.create_hybrid_from_existing(source_collection, target_collection, use_cloud, overwrite)
+
+
+if __name__ == "__main__":
+    """
+    Simple CLI for document ingestion.
+
+    Usage:
+        python -m retrieval_playground.utils.collection_manager [strategy] [--overwrite]
+
+    Examples:
+        python -m retrieval_playground.utils.collection_manager all --overwrite
+        python -m retrieval_playground.utils.collection_manager recursive
+        python -m retrieval_playground.utils.collection_manager hybrid --overwrite
+    """
+    import sys
+    from retrieval_playground.utils.model_manager import model_manager
+
+    args = sys.argv[1:]
+    strategy = args[0] if args and not args[0].startswith("--") else "all"
+    overwrite = "--overwrite" in args
+
+    embeddings = model_manager.get_embeddings()
+    manager = CollectionManager(embeddings)
+
+    manager.ingest_documents(
+        pdf_directory=str(config.WORKSHOP_DATA_DIR),
+        strategy=strategy,
+        use_cloud=True,
+        overwrite=overwrite
+    )

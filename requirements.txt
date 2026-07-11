@@ -1,7 +1,8 @@
 # Core LangChain (Latest compatible versions)
 langchain
 langchain-core
-langchain-community
+langchain-community>=0.3,<0.4.2
+langgraph
 
 # Google Gemini (LLM + Embeddings)
 langchain-google-genai
@@ -32,8 +33,13 @@ sentence-transformers
 # Evaluation (RAGAS - let pip resolve compatible version)
 ragas
 datasets
+rapidfuzz
 
 # Utilities
 pydantic
 pydantic-settings
 uvicorn
+
+# Notebook (required for Docker workshop / tutorials)
+jupyter>=1.0.0
+ipykernel>=6.0.0

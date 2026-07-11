@@ -18,7 +18,7 @@ from retrieval_playground.utils.model_manager import model_manager
 # CONFIGURATION
 # ============================================================================
 
-ROUTE_SIMILARITY_THRESHOLD = 0.65
+ROUTE_SIMILARITY_THRESHOLD = 0.5  # Lowered from 0.65 to improve matching
 ROUTE_CONFIDENCE_PRECISION = 3
 
 
@@ -62,7 +62,12 @@ factual_route = Route(
         # Definition queries
         "define", "definition of", "what does mean", "meaning of",
         "what is the definition", "terminology of", "what is a", "what are the",
-        "explain the term", "what is meant by", "glossary term"
+        "explain the term", "what is meant by", "glossary term",
+        # Additional general patterns
+        "give me the definition", "can you define", "can you tell me what",
+        "tell me what is", "I want to know what", "could you explain what",
+        "what exactly is", "what exactly are", "give me information on",
+        "provide information about", "describe what is"
     ],
 )
 
@@ -84,11 +89,15 @@ analytical_route = Route(
         "elaborate on", "break down", "walk through the logic",
         # How does/do X work (complex explanatory)
         "how does", "how do", "how did", "how does it work", "how do they work",
+        "how does this work", "how do these work", "working of", "functionality of",
         # Procedural how-to queries
         "how to", "how do I", "how can I", "how should I",
         "steps to", "process for", "procedure for", "method for",
         "guide to", "tutorial on", "instructions for", "way to",
-        "approach to", "technique for", "strategy for"
+        "approach to", "technique for", "strategy for",
+        # Additional general patterns
+        "can you explain how", "could you describe how", "walk me through",
+        "help me understand how", "mechanisms of", "working mechanism"
     ],
 )
 
@@ -113,7 +122,12 @@ comparison_route = Route(
         # Similarity comparison
         "similarities and differences", "similarities between", "how are X and Y similar",
         # Contrast
-        "contrast", "contrast between", "contrasting X and Y"
+        "contrast", "contrast between", "contrasting X and Y",
+        # Additional general patterns
+        "compare and contrast", "comparison between", "can you compare",
+        "what are the differences", "how do they compare", "how do these differ",
+        "what distinguishes", "comparing and contrasting", "relative merits of",
+        "trade-offs between", "choose between", "deciding between"
     ],
 )
 
@@ -418,109 +432,3 @@ def get_route_info():
         }
 
     return route_info
-
-
-# ============================================================================
-# DEMO
-# ============================================================================
-
-def demo_routing():
-    """
-    Demonstrate routing functionality with workshop dataset examples.
-    """
-    print("=" * 80)
-    print("ROUTING DEMO - SciPy Workshop Dataset")
-    print("=" * 80)
-
-    # Test queries for each route type
-    test_queries = [
-        ("Hello! How are you?", "greetings"),
-        ("What are the key components of the Agent Laboratory system?", "factual"),
-        ("What is the definition of function space diffusion?", "factual"),
-        ("Explain why quantum graph neural networks work better than classical methods", "analytical"),
-        ("How can I train a transformer model on climate data?", "analytical"),
-        ("Compare PyTorch versus JAX for scientific computing", "comparison"),
-    ]
-
-    print(f"\nConfigured Routes: {len(routes)}")
-    print(f"Similarity Threshold: {ROUTE_SIMILARITY_THRESHOLD}")
-    print()
-
-    for query, expected_route in test_queries:
-        print(f"\nQuery: {query}")
-        print(f"Expected Route: {expected_route}")
-
-        # Test semantic_layer with metadata
-        result = semantic_layer(query, return_metadata=True)
-        print(f"Detected Route: {result['route_name']}")
-        print(f"Confidence: {result['confidence']}")
-        print(f"Retrieval Method: {result['retrieval_method']}")
-        print(f"Requires Retrieval: {result['requires_retrieval']}")
-        print(f"Use Reranking: {result['use_reranking']}")
-        print("-" * 80)
-
-    # Test complexity-based routing
-    print("\n" + "=" * 80)
-    print("COMPLEXITY-BASED ROUTING")
-    print("=" * 80)
-
-    complex_queries = [
-        "What is AutoClimDS?",
-        "Compare the performance of different dataframe libraries and explain which is best for large-scale scientific data",
-        "How do quantum graph neural networks leverage quantum mechanics to improve molecular property prediction compared to classical approaches?"
-    ]
-
-    for query in complex_queries:
-        print(f"\nQuery: {query}")
-        result = route_with_complexity_analysis(query)
-        print(f"Route: {result['route']['route_name']}")
-        print(f"Complexity: {result['complexity']['complexity']} (score: {result['complexity']['score']})")
-        print(f"Final Strategy: {result['final_strategy']}")
-        print(f"Final Retrieval Method: {result['final_retrieval_method']}")
-        print(f"Signals: {result['metadata']['signals']}")
-
-    # Test tool selection
-    print("\n" + "=" * 80)
-    print("TOOL SELECTION")
-    print("=" * 80)
-
-    tool_queries = [
-        "What is function space diffusion?",
-        "How many papers discuss climate data analysis?",
-        "What are the latest developments in AI agents for scientific research in 2026?",
-        "Compare the benchmark performance across different GPU architectures"
-    ]
-
-    for query in tool_queries:
-        route_decision = route_with_complexity_analysis(query)
-        tool = select_retrieval_tool(query, route_decision)
-        print(f"\nQuery: {query}")
-        print(f"Selected Tool: {tool}")
-        print(f"Route: {route_decision['route']['route_name']}")
-
-    # Test scientific paper queries
-    print("\n" + "=" * 80)
-    print("SCIENTIFIC PAPER QUERIES")
-    print("=" * 80)
-
-    scientific_queries = [
-        "What experimental results demonstrate the effectiveness of AI agents in scientific research?",
-        "Describe the architecture for climate data retrieval and analysis systems",
-        "What optimization techniques are recommended for improving LLM performance in Python?"
-    ]
-
-    for query in scientific_queries:
-        print(f"\nQuery: {query}")
-        result = route_with_complexity_analysis(query)
-        print(f"Route: {result['route']['route_name']}")
-        print(f"Complexity: {result['complexity']['complexity']}")
-        print(f"Strategy: {result['final_strategy']}")
-        print(f"Reranking: {result['route']['use_reranking']}")
-
-    print("\n" + "=" * 80)
-    print("DEMO COMPLETE")
-    print("=" * 80)
-
-
-if __name__ == "__main__":
-    demo_routing()
