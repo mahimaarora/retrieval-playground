@@ -6,18 +6,20 @@ A Python toolkit for RAG experimentation and evaluation.
 
 ### Pre-Retrieval Strategies
 
-- **Chunking**: Baseline, recursive character, unstructured title-based, and Docling hybrid chunking  
-- **Query Enhancement**: Query expansion, decomposition, rewriting, and self-querying  
-- **Semantic Routing**: Route queries to appropriate knowledge domains with confidence scoring
+- **Chunking**: Recursive character, contextual (LLM-summary prepended), parent-child (dual-tier hierarchy), and Docling multimodal (text + tables + images)  
+- **Query Enhancement**: Query expansion, multi-query / RAG Fusion, decomposition, conversational rewriting, and step-back prompting  
+- **Semantic Routing**: Route queries to appropriate retrieval methods with confidence scoring  
+- **Smart Automation**: Complexity classification, auto-orchestration (`optimize_query_for_retrieval`), and routing + complexity combined dispatch
 
 ### Mid-Retrieval Strategies
 
-- **Basic Similarity Search**: Standard semantic search with vector databases  
-- **MMR (Maximal Marginal Relevance)**: Balance relevance and diversity in results  
-- **Score Thresholding**: Quality-based filtering of retrieval results  
-- **Metadata Filtering**: Context-aware search with document attributes  
-- **Reranking**: Cross-encoder models to reorder results for higher precision  
-- **Hybrid Retrieval**: Combine BM25 keyword search with dense semantic search
+- **Dense Search**: Standard semantic search with vector databases  
+- **Hybrid Search**: Combine BM25 keyword search with dense semantic search via Reciprocal Rank Fusion  
+- **Reranking**: Two-stage retrieval with cross-encoder (FlashRank) to reorder results for higher precision  
+- **Parent-Child Retrieval**: Adaptive threshold-based expansion from precise child chunks to context-rich parents  
+- **Multi-Query Hybrid**: Four-stage pipeline (variant generation → hybrid search → RRF fusion → reranking)  
+- **Route-Driven Retrieval**: Semantic routing to automatically select the retrieval method per query type  
+- **Adaptive Retrieval**: Complexity-based auto-configuration of method, result count, and reranking
 
 ### Post-Retrieval Strategies
 
@@ -85,8 +87,8 @@ Explore RAG techniques through hands-on Jupyter notebooks in `retrieval_playgrou
 |----------|--------|
 | **1A_Pre_Chunking_Methods.ipynb** | Compare chunking strategies (recursive, parent-child, contextual, Docling) |
 | **1B_Pre_Query_Methods.ipynb** | Query expansion, decomposition, rewriting, multi-query, step-back, semantic routing |
-| **2A_Basic_Mid_Retrieval_Methods.ipynb** | Dense search, MMR, score thresholds, metadata filtering |
-| **2B_Advanced_Mid_Retrieval_Methods.ipynb** | Reranking, hybrid BM25+dense search, parent-child adaptive retrieval |
+| **2A_Basic_Mid_Retrieval_Methods.ipynb** | Dense search, hybrid BM25+dense search, cross-encoder reranking, parent-child retrieval |
+| **2B_Advanced_Mid_Retrieval_Methods.ipynb** | Multi-query hybrid pipeline, query routing, adaptive retrieval, production pipeline comparison |
 | **3_Post_Retrieval.ipynb** | Retrieval grading, knowledge refinement, context compression, full context preparation pipeline, document assembly |
 | **4_Evaluation.ipynb** | Retrieval, generation, and tool metrics; RAGAS runners; custom metrics; pipeline scorecard; baseline vs post-retrieval A/B |
 | **5_Agentic_RAG.ipynb** | LangGraph ReAct agent with `retrieve_workshop_docs`; prompt routing; lightweight tool-selection check |
