@@ -26,11 +26,6 @@ mid_retrieval/
 - Collections include: `recursive_character`, `hybrid`, `parent_child`
 - Simply use the provided credentials in your `.env` file - no setup needed!
 
-**Creating Your Own Collections:**
-- Follow the setup guide in `retrieval_playground/SETUP.md`
-- Configure your own Qdrant instance (cloud or local)
-- Ingest data using collection_manager (see Collection Setup below)
-
 ### Interactive Notebooks
 - `tutorial/2A_Basic_Mid_Retrieval_Methods.ipynb` - Basic techniques (Dense, Hybrid, Reranking, Parent-Child)
 - `tutorial/2B_Advanced_Mid_Retrieval_Methods.ipynb` - Advanced patterns (Multi-Query, Routing, Adaptive)
@@ -266,7 +261,7 @@ config.MODEL_NAME              # LLM for query generation
 config.EMBEDDING_MODEL_NAME    # Bi-encoder for dense search
 config.RERANKER_MODEL         # Cross-encoder for reranking
 
-# Qdrant connection (use instructor-provided credentials or your own)
+# Qdrant connection (use instructor-provided credentials)
 config.QDRANT_URL
 config.QDRANT_KEY
 ```
@@ -274,7 +269,7 @@ config.QDRANT_KEY
 **Environment Setup:**
 Create `.env` file with:
 ```bash
-# Qdrant (instructor-provided or your own)
+# Qdrant (instructor-provided)
 QDRANT_URL=your_qdrant_url
 QDRANT_KEY=your_qdrant_api_key
 
@@ -286,25 +281,10 @@ OPENAI_API_KEY=your_openai_key
 
 ## 📦 Collection Setup
 
-**Using Instructor-Provided Collections (Recommended for Students):**
+**Using Instructor-Provided Collections:**
 - Use the Qdrant credentials shared by instructors
 - Collections are ready: `recursive_character`, `hybrid`, `parent_child`
 - No ingestion needed - just start querying!
-
-**Creating Your Own Collections:**
-1. Set up your Qdrant instance (see `SETUP.md`)
-2. Ingest data with collection_manager:
-
-```bash
-# Base recursive collection
-python -m retrieval_playground.utils.collection_manager recursive --overwrite
-
-# Hybrid collection (BM25 + Dense)
-python -m retrieval_playground.utils.collection_manager hybrid --overwrite
-
-# Parent-child collection
-python -m retrieval_playground.utils.collection_manager parent_child --overwrite
-```
 
 ---
 
@@ -330,7 +310,7 @@ python -m retrieval_playground.utils.collection_manager parent_child --overwrite
 ---
 
 **Ready to start?** 
-1. ✅ Use instructor credentials (easiest) OR set up your own Qdrant
+1. ✅ Use instructor credentials (easiest)
 2. 📓 Open `tutorial/2A_Basic_Mid_Retrieval_Methods.ipynb`
 3. 🚀 Run the interactive examples!
 
