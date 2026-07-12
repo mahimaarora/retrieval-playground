@@ -67,18 +67,6 @@ All setup guides include:
 
 ---
 
-## 📓 Quick Example
-
-```python
-from retrieval_playground import ModelManager
-from retrieval_playground.src.pre_retrieval.chunking_strategies import PreRetrievalChunking
-
-# Initialize and use
-model_manager = ModelManager()
-chunker = PreRetrievalChunking()
-chunks = chunker.chunk_documents(documents, strategy="docling")
-```
-
 ## 📓 Interactive Notebooks
 
 Explore RAG techniques through hands-on Jupyter notebooks in `retrieval_playground/tutorial/` (run in order):
