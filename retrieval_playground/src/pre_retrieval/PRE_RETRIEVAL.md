@@ -49,10 +49,7 @@ See the interactive notebooks for hands-on examples:
 
 - `tutorial/1A_Pre_Chunking_Methods.ipynb` - Learn all 4 strategies with code examples
 
-To ingest your own documents and create Qdrant collections, refer to the **Setup Guide** (ingestion takes ~15-30mins for all strategies).
-
 ---
-
 
 
 ## 🔄 Query Optimization

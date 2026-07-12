@@ -52,52 +52,18 @@ You need API keys to run the notebooks. Follow the instructions below:
 
 > 💡 **Free tier:** Google Gemini offers free API access with generous limits for testing.
 
-#### 🔑 OpenAI API Key (Optional Alternative)
-
-If you prefer to use OpenAI instead of Gemini:
-
-1. **Visit:** [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. **Sign in** or create an account
-3. **Click:** "Create new secret key"
-4. **Copy the key** (starts with `sk-...`)
-5. **Save it** - you'll need this for `.env` file
-
-> ⚠️ **Note:** OpenAI requires payment information on file.
-
 ---
 
-### Step 3: Set Up Qdrant (Good to Have)
+### Step 3: Set Up Qdrant
 
-Qdrant is a vector database used in the workshop. Two options:
+Qdrant is a vector database used in the workshop. 
 
-#### Option A: Use Instructor's Shared Instance (During Workshop)
+#### Use Instructor's Shared Instance (During Workshop)
 
 Your instructor will provide:
 
 - `QDRANT_URL` - Database URL
 - `QDRANT_KEY` - Access key
-
-Skip to Step 4 and use these values.
-
-#### Option B: Create Your Own Free Qdrant Account
-
-1. **Visit:** [https://cloud.qdrant.io/](https://cloud.qdrant.io/)
-2. **Click:** "Get Started Free"
-3. **Sign up** with email or GitHub
-4. **Verify** your email
-5. **Create a cluster:**
-  - Click "Create Cluster"
-  - Choose "Free Tier" (1GB, perfect for learning)
-  - Select region closest to you
-  - Click "Create"
-6. **Get your credentials:**
-  - Click on your cluster name
-  - Copy **Cluster URL** (this is your `QDRANT_URL`)
-  - Go to "API Keys" tab
-  - Click "Create API Key"
-  - Copy the key (this is your `QDRANT_KEY`)
-
-> 💡 **Free tier:** Qdrant offers 1GB free forever, no credit card needed.
 
 ---
 
@@ -118,7 +84,7 @@ After completing the Docker setup from your OS guide, configure your API keys:
    # Required: Google Gemini API Key
    GOOGLE_API_KEY=AIza...your_actual_key_here
 
-   # Required: Qdrant credentials (from instructor or your account)
+   # Required: Qdrant credentials (from instructor)
    QDRANT_URL=https://your-cluster.cloud.qdrant.io
    QDRANT_KEY=your_qdrant_key_here
   ```
