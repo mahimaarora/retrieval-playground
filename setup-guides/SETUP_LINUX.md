@@ -8,7 +8,7 @@ Simple 3-step setup for the Retrieval Playground workshop.
 
 - **20 GB+ free disk space** for Docker (the workshop image is ~11 GB)
 - Internet connection
-- API keys from your instructor (or create your own — see [setup-guides/README.md](README.md))
+- Google Gemini API key (see [setup-guides/README.md](README.md))
 
 ---
 
@@ -72,13 +72,9 @@ vim .env
 gedit .env
 ```
 
-**Use Instructor's Qdrant (Read-only, Pre-ingested Data)**
-
-Instructor will provide credentials for a shared Qdrant cluster with pre-ingested data:
+Add your API key:
 ```env
-GOOGLE_API_KEY=your_key_here
-QDRANT_URL=instructor_provided_url
-QDRANT_KEY=instructor_provided_key
+GOOGLE_API_KEY=your_gemini_api_key
 ```
 Save and close the file.
 

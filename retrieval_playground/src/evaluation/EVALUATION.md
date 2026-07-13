@@ -24,7 +24,6 @@ evaluation/
 
 **Environment:**
 - `GOOGLE_API_KEY` - Gemini LLM + embeddings (RAGAS LLM-judged metrics)
-- `QDRANT_URL` / `QDRANT_KEY` - if evaluating live retrieval from indexed workshop PDFs
 - RAGAS and `datasets` installed (included in workshop `requirements.txt`)
 
 **Test dataset:**
@@ -305,9 +304,7 @@ config.PYTHON_LOG_LEVEL
 
 **Environment (`.env`):**
 ```bash
-GOOGLE_API_KEY=your_gemini_key
-QDRANT_URL=your_qdrant_url      # for live RAG eval
-QDRANT_KEY=your_qdrant_key
+GOOGLE_API_KEY=your_gemini_api_key
 ```
 
 **RAGAS notes:**
@@ -357,7 +354,7 @@ Reference
 ---
 
 **Ready to start?**
-1. ✅ Confirm `.env` has `GOOGLE_API_KEY` (and Qdrant if running live RAG)
+1. ✅ Confirm `.env` has `GOOGLE_API_KEY`
 2. 📓 Open `tutorial/4_Evaluation.ipynb`
 3. 🚀 Run retrieval + generation eval on the shared test set!
 

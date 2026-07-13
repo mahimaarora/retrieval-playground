@@ -70,14 +70,9 @@ Simple 3-step setup for the Retrieval Playground workshop.
   - Rename the copy to `.env` (remove .example)
 3. **Edit .env file:**
   - Right-click `.env` → Open with Notepad
-  
-  **Use Instructor's Qdrant (Read-only, Pre-ingested Data)**
-  
-  Instructor will provide credentials for a shared Qdrant cluster with pre-ingested data:
+  - Add your API key:
   ```
-  GOOGLE_API_KEY=your_key_here
-  QDRANT_URL=instructor_provided_url
-  QDRANT_KEY=instructor_provided_key
+  GOOGLE_API_KEY=your_gemini_api_key
   ```
   - Save and close
 

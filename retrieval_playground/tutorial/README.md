@@ -36,16 +36,9 @@ This tutorial contains **7 interactive notebooks** covering the complete RAG opt
 
 
 
-### Required Credentials
+### Required
 
-**1. Qdrant (Vector Database)**
-
-- **Recommended:** Use credentials provided by instructors - collections are already ingested and ready to use
-- **Alternative:** Set up your own Qdrant instance (see Setup section below)
-
-**2. Gemini API (for LLM-powered features)**
-
-- Get your API key from: [Google AI Studio](https://aistudio.google.com/app/apikey)
+- **Google Gemini API key** — get one from [Google AI Studio](https://aistudio.google.com/app/apikey)
 - Used for query generation, contextual chunking, and expansion
 
 
@@ -55,11 +48,6 @@ This tutorial contains **7 interactive notebooks** covering the complete RAG opt
 Create a `.env` file in the project root:
 
 ```bash
-# Qdrant (use instructor-provided credentials or your own)
-QDRANT_URL=your_qdrant_url
-QDRANT_KEY=your_qdrant_api_key
-
-# Gemini (required)
 GOOGLE_API_KEY=your_gemini_api_key
 ```
 
@@ -208,19 +196,12 @@ Follow this order for the best learning experience:
 
 
 
-## 🔧 Using Pre-Ingested Collections
+## 🔧 Pre-Ingested Collections
 
-**If using instructor-provided Qdrant credentials:**
+Collections are pre-loaded and ready to use: `recursive_character`, `hybrid`, `parent_child`, `contextual`, `docling`
 
-- Collections are ready: `recursive_character`, `hybrid`, `parent_child`
-- Skip ingestion steps in notebooks - start querying immediately
+- Skip ingestion steps in notebooks — start querying immediately
 - All examples will work out of the box
-
-**If creating your own collections:**
-
-- Follow collection setup instructions in notebooks
-- Run ingestion cells before retrieval examples
-- Refer to `src/mid_retrieval/MID_RETRIEVAL.md` for detailed setup
 
 ---
 
@@ -245,14 +226,14 @@ After completing the tutorials, you will:
 
 **Collection not found:**
 
-- Using instructor credentials? Make sure you copied them correctly to `.env`
-- Creating your own? Run the ingestion cells in the notebooks first
+- Run `verify_setup.ipynb` to check your connection
+- Collections should be pre-loaded and ready to use
 
 **API key errors:**
 
 - Check `.env` file exists in project root (not in `/tutorial`)
-- Verify keys are correct (no extra spaces or quotes)
-- For Gemini: Ensure API key is active at [Google AI Studio](https://aistudio.google.com)
+- Verify key is correct (no extra spaces or quotes)
+- Ensure API key is active at [Google AI Studio](https://aistudio.google.com)
 
 **Module not found:**
 
