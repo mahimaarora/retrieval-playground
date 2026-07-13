@@ -6,7 +6,15 @@ Simple 3-step setup for the Retrieval Playground workshop.
 
 ## Step 1: Install Docker
 
-### Option A: Using WSL2 + Docker CLI (Recommended)
+### Option A: Docker Desktop
+
+1. Visit: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+2. Download Docker Desktop for Windows
+3. Run installer (enable WSL 2)
+4. Restart computer
+5. Start Docker Desktop
+
+### Option B: Using WSL2 + Docker CLI
 
 1. **Install WSL2:**
   ```powershell
@@ -38,15 +46,6 @@ Simple 3-step setup for the Retrieval Playground workshop.
   ```bash
    sudo apt-get install docker-compose-plugin
   ```
-
-### Option B: Docker Desktop (GUI Alternative)
-
-1. Visit: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
-2. Download Docker Desktop for Windows
-3. Run installer (enable WSL 2)
-4. Restart computer
-5. Start Docker Desktop
-
 ---
 
 ## Step 2: Get Workshop Files & Add API Keys
