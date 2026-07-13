@@ -21,10 +21,9 @@ mid_retrieval/
 ## 🚀 Quick Start
 
 ### Prerequisites
-**Using Pre-Ingested Collections (Recommended for Students):**
-- Instructors have provided Qdrant credentials with all collections ready to use
-- Collections include: `recursive_character`, `hybrid`, `parent_child`
-- Simply use the provided credentials in your `.env` file - no setup needed!
+**Pre-Ingested Collections:**
+- Collections are pre-loaded and ready to use: `recursive_character`, `hybrid`, `parent_child`
+- No setup needed — start querying immediately!
 
 ### Interactive Notebooks
 - `tutorial/2A_Basic_Mid_Retrieval_Methods.ipynb` - Basic techniques (Dense, Hybrid, Reranking, Parent-Child)
@@ -261,7 +260,7 @@ config.MODEL_NAME              # LLM for query generation
 config.EMBEDDING_MODEL_NAME    # Bi-encoder for dense search
 config.RERANKER_MODEL         # Cross-encoder for reranking
 
-# Qdrant connection (use instructor-provided credentials)
+# Qdrant connection (auto-configured)
 config.QDRANT_URL
 config.QDRANT_KEY
 ```
@@ -269,22 +268,15 @@ config.QDRANT_KEY
 **Environment Setup:**
 Create `.env` file with:
 ```bash
-# Qdrant (instructor-provided)
-QDRANT_URL=your_qdrant_url
-QDRANT_KEY=your_qdrant_api_key
-
-# OpenAI (for query generation)
-OPENAI_API_KEY=your_openai_key
+GOOGLE_API_KEY=your_gemini_api_key
 ```
 
 ---
 
-## 📦 Collection Setup
+## 📦 Collections
 
-**Using Instructor-Provided Collections:**
-- Use the Qdrant credentials shared by instructors
-- Collections are ready: `recursive_character`, `hybrid`, `parent_child`
-- No ingestion needed - just start querying!
+Collections are pre-loaded and ready to use: `recursive_character`, `hybrid`, `parent_child`
+- No ingestion needed — start querying!
 
 ---
 
@@ -310,7 +302,7 @@ OPENAI_API_KEY=your_openai_key
 ---
 
 **Ready to start?** 
-1. ✅ Use instructor credentials (easiest)
+1. ✅ Confirm `.env` has `GOOGLE_API_KEY`
 2. 📓 Open `tutorial/2A_Basic_Mid_Retrieval_Methods.ipynb`
 3. 🚀 Run the interactive examples!
 

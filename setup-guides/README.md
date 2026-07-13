@@ -37,39 +37,21 @@ Each guide covers:
 
 ---
 
-### Step 2: Get API Keys (Required)
-
-You need API keys to run the notebooks. Follow the instructions below:
-
-#### 🔑 Google Gemini API Key (REQUIRED)
+### Step 2: Get Your Google Gemini API Key
 
 1. **Visit:** [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 2. **Sign in** with your Google account
 3. **Click:** "Get API Key" or "Create API Key"
 4. **Create key in new project** or select existing project
 5. **Copy the API key** (starts with `AIza...`)
-6. **Save it** - you'll add this to `.env` file later
 
 > 💡 **Free tier:** Google Gemini offers free API access with generous limits for testing.
 
 ---
 
-### Step 3: Set Up Qdrant
+### Step 3: Configure Environment Variables
 
-Qdrant is a vector database used in the workshop. 
-
-#### Use Instructor's Shared Instance (During Workshop)
-
-Your instructor will provide:
-
-- `QDRANT_URL` - Database URL
-- `QDRANT_KEY` - Access key
-
----
-
-### Step 4: Configure Environment Variables
-
-After completing the Docker setup from your OS guide, configure your API keys:
+After completing the Docker setup from your OS guide:
 
 1. **Navigate to the retrieval-playground folder**
 2. **Copy the example file:**
@@ -79,14 +61,9 @@ After completing the Docker setup from your OS guide, configure your API keys:
 3. **Edit the .env file:**
   - **Mac/Linux:** `nano .env` or `open -e .env`
   - **Windows:** `notepad .env`
-4. **Add your keys:**
+4. **Add your API key:**
   ```env
-   # Required: Google Gemini API Key
-   GOOGLE_API_KEY=AIza...your_actual_key_here
-
-   # Required: Qdrant credentials (from instructor)
-   QDRANT_URL=https://your-cluster.cloud.qdrant.io
-   QDRANT_KEY=your_qdrant_key_here
+   GOOGLE_API_KEY=your_gemini_api_key
   ```
 5. **Save and close the file**
 
@@ -153,7 +130,6 @@ docker compose restart
 | -------------------------- | ---------------------------------------------- |
 | Import errors in notebooks | Run `verify_setup.ipynb` to check installation |
 | "GOOGLE_API_KEY not found" | Check `.env` file has correct key              |
-| "Cannot connect to Qdrant" | Verify `QDRANT_URL` and `QDRANT_KEY` in `.env` |
 | Docker not starting        | Make sure Docker service is running            |
 | Port 8888 in use           | Stop other Jupyter instances or change port    |
 | No space left on device    | `docker system prune -a` — image needs ~11 GB  |
@@ -164,7 +140,6 @@ docker compose restart
 
 - **During workshop:** Ask your instructor
 - **Setup issues:** Check your OS-specific guide
-- **API key issues:** Review Step 2 above
 - **GitHub issues:** [https://github.com/mahimaarora/retrieval-playground/issues](https://github.com/mahimaarora/retrieval-playground/issues)
 
 ---

@@ -6,7 +6,15 @@ Simple 3-step setup for the Retrieval Playground workshop.
 
 ## Step 1: Install Docker
 
-### Option A: Using WSL2 + Docker CLI (Recommended)
+### Option A: Docker Desktop
+
+1. Visit: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+2. Download Docker Desktop for Windows
+3. Run installer (enable WSL 2)
+4. Restart computer
+5. Start Docker Desktop
+
+### Option B: Using WSL2 + Docker CLI
 
 1. **Install WSL2:**
   ```powershell
@@ -38,15 +46,6 @@ Simple 3-step setup for the Retrieval Playground workshop.
   ```bash
    sudo apt-get install docker-compose-plugin
   ```
-
-### Option B: Docker Desktop (GUI Alternative)
-
-1. Visit: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
-2. Download Docker Desktop for Windows
-3. Run installer (enable WSL 2)
-4. Restart computer
-5. Start Docker Desktop
-
 ---
 
 ## Step 2: Get Workshop Files & Add API Keys
@@ -70,14 +69,9 @@ Simple 3-step setup for the Retrieval Playground workshop.
   - Rename the copy to `.env` (remove .example)
 3. **Edit .env file:**
   - Right-click `.env` → Open with Notepad
-  
-  **Use Instructor's Qdrant (Read-only, Pre-ingested Data)**
-  
-  Instructor will provide credentials for a shared Qdrant cluster with pre-ingested data:
+  - Add your API key:
   ```
-  GOOGLE_API_KEY=your_key_here
-  QDRANT_URL=instructor_provided_url
-  QDRANT_KEY=instructor_provided_key
+  GOOGLE_API_KEY=your_gemini_api_key
   ```
   - Save and close
 

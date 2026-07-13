@@ -258,9 +258,7 @@ config.EMBEDDING_MODEL_NAME # Gemini embeddings for extractive compression
 
 **Environment (`.env`):**
 ```bash
-GOOGLE_API_KEY=your_gemini_key
-QDRANT_URL=your_qdrant_url
-QDRANT_KEY=your_qdrant_key
+GOOGLE_API_KEY=your_gemini_api_key
 ```
 
 **Tunable parameters:**

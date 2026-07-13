@@ -59,15 +59,9 @@ docker-compose --version
    open -e .env
    ```
 
-3. **Add your keys:**
-
-   **Use Instructor's Qdrant (Read-only, Pre-ingested Data)**
-   
-   Instructor will provide credentials for a shared Qdrant cluster with pre-ingested data:
+3. **Add your API key:**
    ```
-   GOOGLE_API_KEY=your_key_here
-   QDRANT_URL=instructor_provided_url
-   QDRANT_KEY=instructor_provided_key
+   GOOGLE_API_KEY=your_gemini_api_key
    ```
 ---
 

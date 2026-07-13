@@ -74,9 +74,7 @@ if [ ! -f .env ]; then
     else
         echo "❌ .env.example not found. Creating basic template..."
         cat > .env << 'EOF'
-GOOGLE_API_KEY=your_google_api_key_here
-QDRANT_URL=your_qdrant_url_here
-QDRANT_KEY=your_qdrant_key_here
+GOOGLE_API_KEY=your_gemini_api_key
 EOF
         echo "✅ .env file created"
         echo ""

@@ -97,19 +97,10 @@ vim .env
 notepad .env
 ```
 
-Add your API keys:
-
-**Use Instructor's Qdrant (Read-only, Pre-ingested Data)**
-
-Instructor will provide credentials for a shared Qdrant cluster with pre-ingested data:
+Add your API key:
 
 ```env
-# Required: Google Gemini API Key
-GOOGLE_API_KEY=your_key_here
-
-# Required: Qdrant credentials (provided by instructor)
-QDRANT_URL=instructor_provided_url
-QDRANT_KEY=instructor_provided_key
+GOOGLE_API_KEY=your_gemini_api_key
 ```
 ---
 
