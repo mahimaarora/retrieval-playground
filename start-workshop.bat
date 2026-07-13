@@ -65,9 +65,7 @@ if not exist .env (
     ) else (
         echo [ERROR] .env.example not found. Creating basic template...
         (
-            echo GOOGLE_API_KEY=your_google_api_key_here
-            echo QDRANT_URL=your_qdrant_url_here
-            echo QDRANT_KEY=your_qdrant_key_here
+            echo GOOGLE_API_KEY=your_gemini_api_key
         ) > .env
         echo [OK] .env file created
         echo.
