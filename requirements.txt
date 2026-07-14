@@ -19,6 +19,7 @@ pypdf
 langchain-text-splitters
 docling
 langchain-docling
+opencv-python-headless
 
 # Routing
 semantic-router
