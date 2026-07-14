@@ -36,7 +36,7 @@ class KnowledgeRefiner:
             (
                 "system",
                 """You judge whether a single sentence from a retrieved passage helps answer
-the user's question. Ignore stylistic filler and tangential examples.""",
+the user's question. Even if they slightly relate to the question mark them relevant. Ignore stylistic filler and tangential examples.""",
             ),
             (
                 "user",
